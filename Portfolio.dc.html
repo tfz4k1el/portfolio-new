@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Hafiz Yoosuf</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="prefetch" href="Portfolio Preview.html">
+  <link rel="prefetch" href="Portfolio.jsx">
+  <link rel="prefetch" href="https://unpkg.com/react@18/umd/react.production.min.js">
+  <link rel="prefetch" href="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js">
+  <link rel="prefetch" href="https://unpkg.com/@babel/standalone/babel.min.js">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; padding:0; }
+    @keyframes pf-in{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
+    @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.01ms !important; animation-delay:0ms !important; transition-duration:0.01ms !important; } }
+    [data-card-extra]{ display:none; }
+    /* Desktop (>900px) — both containers fill display height.
+       Left: 1x3 grid (fill / hug / fill). Right: 4 rows flex-fill the height;
+       card width derives from row height via the 16:9 ratio — nothing overflows. */
+    @media (min-width: 901px){
+      [data-el="left"]{ display:grid !important; grid-template-rows:1fr auto 1fr; height:100%; }
+      [data-el="left"] > div:first-child{ align-self:start; }
+      [data-el="nowplaying"]{ align-self:end; }
+      [data-el="projects"]{ height:100%; }
+      [data-el="proj-inner"]{ height:100%; }
+      [data-row]{ flex:1 1 0 !important; min-height:0; }
+      [data-strip]{ height:100%; }
+      [data-card]{ width:auto !important; height:100%; }
+    }
+    /* Tablet (641–900px) — projects stack on top as a full-width banner: two rows of four */
+    @media (min-width: 641px) and (max-width: 900px){
+      [data-el="page"]{ height:auto !important; min-height:100vh; overflow:visible !important; flex-direction:column-reverse !important; padding:0 24px !important; gap:8px !important; }
+      [data-el="left"]{ padding:8px 0 32px 0 !important; }
+      [data-el="projects"]{ width:calc(100% + 48px) !important; max-width:none !important; margin:0 -24px; padding:18px 0 0 0 !important; }
+      [data-card]{ width:30vw !important; }
+      [data-card-extra]{ display:block; }
+      [data-row="2"], [data-row="3"]{ display:none !important; }
+      [data-el="nowplaying"]{ margin-top:40px; }
+    }
+    /* Mobile (≤640px) — projects section is a full-width banner: two rows of four */
+    @media (max-width: 640px){
+      [data-el="page"]{ height:auto !important; min-height:100vh; overflow:visible !important; flex-direction:column-reverse !important; padding:0 20px !important; gap:8px !important; }
+      [data-el="left"]{ padding:8px 0 32px 0 !important; }
+      [data-el="projects"]{ width:calc(100% + 40px) !important; max-width:none !important; margin:0 -20px; padding:18px 0 0 0 !important; }
+      [data-card]{ width:58vw !important; }
+      [data-card-extra]{ display:block; }
+      [data-row="2"], [data-row="3"]{ display:none !important; }
+      [data-el="nowplaying"]{ margin-top:40px; }
+    }
+  @media (max-width: 640px){
+    [data-socials-popup]{ left:0 !important; top:calc(100% + 8px) !important; transform:none !important; min-width:180px; }
+  }
+  </style>
+</helmet>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f34951"></rect><text x="50" y="58" text-anchor="middle" font-family="monospace" font-weight="700" font-size="26" fill="#ffffff">HY</text></svg></template>
+<div data-screen-label="Portfolio" data-el="page" ref="{{ pageRef }}" style="position:relative; width:100%; height:100vh; overflow:hidden; background:#ffffff; display:flex; flex-direction:row; gap:10px; padding:0 32px; align-items:stretch; font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+
+  <!-- LEFT COLUMN -->
+  <div data-el="left" style="position:relative; display:flex; flex-direction:column; flex-grow:1; min-width:0; padding:18px 0;">
+    <div style="display:flex; align-items:center; padding:4px 0; opacity:0; animation:pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards;">
+      <span style="font-family:'Geist',sans-serif; font-weight:700; font-size:20px; line-height:100%; color:#000;">Hafiz Yoosuf</span>
+    </div>
+
+    <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center; gap:24px; max-width:720px;">
+      <div style="display:flex; flex-direction:column; gap:16px; opacity:0; animation:pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards;">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:14px; line-height:100%; letter-spacing:0.08em; color:#454545;">ABOUT</span>
+        <span style="font-family:'Geist',sans-serif; font-weight:600; font-size:16px; line-height:145%; color:#000; text-wrap:pretty;">Second-year engineering student and freelance designer. I do UI/UX Designs — clean interfaces, things that actually make sense to use — plus Motion Graphics and AMVs, mostly in <a href="https://www.figma.com" target="_blank" rel="noopener" style="color:#000; text-decoration:underline; text-decoration-color:#f34951; text-decoration-thickness:1px; text-underline-offset:3px; cursor:pointer;" style-hover="opacity:0.6;">Figma<svg width="8" height="8" viewBox="0 0 8 8" fill="none" style="vertical-align:super; margin-left:2px;"><path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" stroke-width="1.1"></path></svg></a> and <a href="https://www.adobe.com/products/aftereffects.html" target="_blank" rel="noopener" style="color:#000; text-decoration:underline; text-decoration-color:#f34951; text-decoration-thickness:1px; text-underline-offset:3px; cursor:pointer;" style-hover="opacity:0.6;">After Effects<svg width="8" height="8" viewBox="0 0 8 8" fill="none" style="vertical-align:super; margin-left:2px;"><path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" stroke-width="1.1"></path></svg></a>. On the side I'm working on phii. When I'm not working I'm usually wandering irl, some of my best ideas show up mid-walk. Got an interesting idea? <a href="mailto:hafizyoosuf710@gmail.com" style="color:#000; text-decoration:underline; text-decoration-color:#f34951; text-decoration-thickness:1px; text-underline-offset:3px; cursor:pointer;" style-hover="opacity:0.6;">get in touch<svg width="8" height="8" viewBox="0 0 8 8" fill="none" style="vertical-align:super; margin-left:2px;"><path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" stroke-width="1.1"></path></svg></a></span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px; opacity:0; animation:pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards;">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:14px; line-height:100%; letter-spacing:0.08em; color:#454545;">LINKS</span>
+        <div style="display:flex; flex-direction:column; gap:2px; align-items:flex-start;">
+          <div ref="{{ socialsWrapRef }}" style="position:relative; display:flex; align-items:center;">
+            <a href="#" onClick="{{ toggleSocials }}" style="font-family:'Geist',sans-serif; font-weight:600; font-size:16px; line-height:100%; color:#000; cursor:pointer; text-decoration:none; padding:6px 0; display:block;" style-hover="opacity:0.5;">SOCIALS</a>
+            <div data-socials-popup ref="{{ socialsRef }}" style="position:absolute; left:calc(100% + 20px); top:50%; transform:translateY(-50%); opacity:0; visibility:hidden; transition:opacity 150ms ease; background:#fff; border:1px solid #ececec; border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,0.10); padding:16px 18px; display:flex; flex-direction:column; gap:12px; z-index:40; white-space:nowrap;">
+              <a href="https://instagram.com/z4rchx" target="_blank" rel="noopener" style="display:flex; align-items:baseline; gap:12px; text-decoration:none; cursor:pointer;" style-hover="opacity:0.5;"><span style="font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:11px; line-height:100%; letter-spacing:0.08em; color:#8a8a8a; width:82px;">INSTAGRAM</span><span style="font-family:'Geist',sans-serif; font-weight:600; font-size:14px; line-height:100%; color:#000;">z4rchx</span></a>
+              <a href="https://x.com/z4f3x" target="_blank" rel="noopener" style="display:flex; align-items:baseline; gap:12px; text-decoration:none; cursor:pointer;" style-hover="opacity:0.5;"><span style="font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:11px; line-height:100%; letter-spacing:0.08em; color:#8a8a8a; width:82px;">X</span><span style="font-family:'Geist',sans-serif; font-weight:600; font-size:14px; line-height:100%; color:#000;">z4f3x</span></a>
+              <a href="#" style="display:flex; align-items:baseline; gap:12px; text-decoration:none; cursor:pointer;" style-hover="opacity:0.5;"><span style="font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:11px; line-height:100%; letter-spacing:0.08em; color:#8a8a8a; width:82px;">YOUTUBE</span><span style="font-family:'Geist',sans-serif; font-weight:600; font-size:14px; line-height:100%; color:#000;">—</span></a>
+              <a href="#" style="display:flex; align-items:baseline; gap:12px; text-decoration:none; cursor:pointer;" style-hover="opacity:0.5;"><span style="font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:11px; line-height:100%; letter-spacing:0.08em; color:#8a8a8a; width:82px;">DISCORD</span><span style="font-family:'Geist',sans-serif; font-weight:600; font-size:14px; line-height:100%; color:#000;">—</span></a>
+            </div>
+          </div>
+          <div style="position:relative; display:flex; align-items:center;">
+            <a href="#" onClick="{{ toggleBlog }}" style="font-family:'Geist',sans-serif; font-weight:600; font-size:16px; line-height:100%; color:#000; cursor:pointer; text-decoration:none; padding:6px 0; display:block;" style-hover="opacity:0.5;">BLOG</a>
+            <span ref="{{ blogNoteRef }}" style="position:absolute; left:calc(100% + 14px); opacity:0; visibility:hidden; transition:opacity 150ms ease; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:12px; line-height:100%; letter-spacing:0.08em; color:#8a8a8a; white-space:nowrap;">COMING SOON</span>
+          </div>
+          <a href="#" style="font-family:'Geist',sans-serif; font-weight:600; font-size:16px; line-height:100%; color:#000; cursor:pointer; text-decoration:none; padding:6px 0; display:block;" style-hover="opacity:0.5;">RESUME</a>
+          <a href="Guestbook.dc.html" style="font-family:'Geist',sans-serif; font-weight:600; font-size:16px; line-height:100%; color:#000; cursor:pointer; text-decoration:none; padding:6px 0; display:block;" style-hover="opacity:0.5;">GUESTBOOK</a>
+          <a href="Wordle.dc.html" style="font-family:'Geist',sans-serif; font-weight:600; font-size:16px; line-height:100%; color:#000; cursor:pointer; text-decoration:none; padding:6px 0; display:block;" style-hover="opacity:0.5;">WORDLE</a>
+        </div>
+      </div>
+    </div>
+
+    <div data-el="nowplaying" style="display:flex; flex-direction:column; gap:8px; padding:4px 0; opacity:0; animation:pf-in 700ms cubic-bezier(0.16,1,0.3,1) 240ms forwards;">
+      <span style="font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:14px; line-height:100%; letter-spacing:0.08em; color:#454545;">{{ nowLabel }}</span>
+      <span style="font-family:'Geist',sans-serif; font-weight:600; font-size:16px; line-height:100%; color:#000;">{{ nowTrack }}</span>
+    </div>
+  </div>
+
+  <!-- PROJECTS PANEL -->
+  <div data-el="projects" ref="{{ panelRef }}" style="position:relative; width:486px; max-width:48vw; flex-shrink:0; display:flex; flex-direction:column; justify-content:center; transition:width 900ms cubic-bezier(0.16,1,0.3,1), max-width 900ms cubic-bezier(0.16,1,0.3,1); opacity:0; animation:pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards;">
+    <div data-el="proj-inner" ref="{{ containerRef }}" onMouseEnter="{{ onEnter }}" onMouseLeave="{{ onLeave }}" onMouseMove="{{ onMove }}" onClick="{{ goToProjects }}" role="link" aria-label="View all projects" tabIndex="0" onKeyDown="{{ onKey }}" style="position:relative; width:100%; overflow:hidden; background:#fff; display:flex; flex-direction:column; gap:10px; cursor:pointer;">
+
+      <div data-row="0" style="position:relative; flex:none; overflow:hidden; display:flex; flex-direction:row; justify-content:center; align-items:flex-start;">
+        <div data-strip="0" style="display:flex; flex-direction:row; gap:10px; align-items:stretch; flex-shrink:0; will-change:transform;">
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+        </div>
+      </div>
+
+      <div data-row="1" style="position:relative; flex:none; overflow:hidden; display:flex; flex-direction:row; justify-content:center; align-items:flex-start;">
+        <div data-strip="1" style="display:flex; flex-direction:row; gap:10px; align-items:stretch; flex-shrink:0; will-change:transform;">
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+        </div>
+      </div>
+
+      <div data-row="2" style="position:relative; flex:none; overflow:hidden; display:flex; flex-direction:row; justify-content:center; align-items:flex-start;">
+        <div data-strip="2" style="display:flex; flex-direction:row; gap:10px; align-items:stretch; flex-shrink:0; will-change:transform;">
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+        </div>
+      </div>
+
+      <div data-row="3" style="position:relative; flex:none; overflow:hidden; display:flex; flex-direction:row; justify-content:center; align-items:flex-start;">
+        <div data-strip="3" style="display:flex; flex-direction:row; gap:10px; align-items:stretch; flex-shrink:0; will-change:transform;">
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CURSOR TOOLTIP -->
+  <div ref="{{ tooltipRef }}" style="position:fixed; left:0; top:0; opacity:0; pointer-events:none; z-index:50; transition:opacity 150ms ease; background:#000; color:#fff; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:12px; line-height:100%; letter-spacing:0.08em; padding:8px 12px; border-radius:999px; white-space:nowrap;">CLICK TO VIEW ALL PROJECTS</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+// ── Last.fm config ────────────────────────────────────────────────────────────
+const LASTFM_USER = "Zafkiel69";
+const LASTFM_KEY  = "c34fdb3897e465413e4fbf9d94b8da85";
+// ─────────────────────────────────────────────────────────────────────────────
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.containerRef = React.createRef();
+    this.pageRef = React.createRef();
+    this.panelRef = React.createRef();
+    this.tooltipRef = React.createRef();
+    this.socialsRef = React.createRef();
+    this.socialsWrapRef = React.createRef();
+    this.blogNoteRef = React.createRef();
+    this.socialsOpen = false;
+    this.blogOpen = false;
+    this.state = { nowPlaying: null, nowArtist: null, isLive: false };
+    // Lock unique drift params ONCE on load — speed, starting offset, distance.
+    // Seeded so they don't change across re-renders.
+    const seeds = [0.137, 0.642, 0.318, 0.871];
+    const rand = (s) => { const x = Math.sin(s * 99991) * 43758.5453; return x - Math.floor(x); };
+    this.params = seeds.map((s, i) => ({
+      amplitude: 38 + rand(s) * 46,                 // movement distance (px)
+      period: 5200 + rand(s + 1.7) * 5200,          // unique speed (ms per cycle)
+      phase: rand(s + 3.3) * Math.PI * 2,           // starting offset
+    }));
+    this.clock = 0;            // accumulated drift time (frozen while hovering)
+    this.lastTs = null;
+    this.hovering = false;
+    this.raf = null;
+  }
+
+  componentDidMount() {
+    this.measure();
+    this.onResize = () => this.measure();
+    window.addEventListener("resize", this.onResize);
+    // Layout settles after helmet styles/fonts apply — observe the container
+    // so maxShift always reflects the real, settled layout (mount-time
+    // measurement can read scrollWidth == clientWidth and freeze the drift).
+    if (window.ResizeObserver && this.containerRef.current) {
+      this.ro = new ResizeObserver(() => this.measure());
+      this.ro.observe(this.containerRef.current);
+      const s0 = this.containerRef.current.querySelector('[data-strip="0"]');
+      if (s0) this.ro.observe(s0);
+    }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this.measure());
+    setTimeout(() => this.measure(), 300);
+    this.startLoop();
+    // Close the socials popover when clicking anywhere outside it.
+    this.onDocClick = (e) => {
+      if (this.socialsOpen && this.socialsWrapRef.current && !this.socialsWrapRef.current.contains(e.target)) this.setSocials(false);
+    };
+    document.addEventListener("click", this.onDocClick);
+    // Intercept internal page links so navigation gets a fade-out transition.
+    this.onLinkClick = (e) => {
+      const a = e.target.closest && e.target.closest("a[href]");
+      if (!a || a.target === "_blank" || e.defaultPrevented) return;
+      const href = a.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("mailto:") || !href.includes(".html")) return;
+      e.preventDefault();
+      this.fadeNav(href);
+    };
+    document.addEventListener("click", this.onLinkClick);
+    if (LASTFM_USER && LASTFM_KEY) { this.fetchNow(); this.npTimer = setInterval(() => this.fetchNow(), 30000); }
+  }
+
+  fadeNav(href) {
+    const el = this.pageRef.current || document.body;
+    el.style.transition = "opacity 260ms ease";
+    el.style.opacity = "0";
+    setTimeout(() => { window.location.href = href; }, 270);
+  }
+
+  componentWillUnmount() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    window.removeEventListener("resize", this.onResize);
+    document.removeEventListener("click", this.onDocClick);
+    document.removeEventListener("click", this.onLinkClick);
+    if (this.npTimer) clearInterval(this.npTimer);
+    if (this.ro) this.ro.disconnect();
+  }
+
+  setSocials(open) {
+    this.socialsOpen = open;
+    const el = this.socialsRef.current;
+    if (el) { el.style.opacity = open ? "1" : "0"; el.style.visibility = open ? "visible" : "hidden"; }
+  }
+
+  setBlogNote(open) {
+    this.blogOpen = open;
+    const el = this.blogNoteRef.current;
+    if (el) { el.style.opacity = open ? "1" : "0"; el.style.visibility = open ? "visible" : "hidden"; }
+  }
+
+  // Max shift per row so the strip never drifts past the container edge inwards.
+  measure() {
+    const root = this.containerRef.current;
+    if (!root) return;
+    this.maxShift = [0, 1, 2, 3].map((i) => {
+      const strip = root.querySelector('[data-strip="' + i + '"]');
+      if (!strip || !strip.parentElement) return Infinity;
+      return Math.max(0, (strip.scrollWidth - strip.parentElement.clientWidth) / 2);
+    });
+  }
+
+  strips() {
+    const root = this.containerRef.current;
+    if (!root) return [];
+    return [0, 1, 2, 3].map((i) => root.querySelector('[data-strip="' + i + '"]'));
+  }
+
+  driftX(i) {
+    const p = this.params[i];
+    if (!p) return 0;
+    // Scale amplitude to the available overflow (don't hard-clamp the sine) so
+    // motion stays smooth at any viewport instead of pinning at the edges.
+    const m = this.maxShift ? this.maxShift[i] : Infinity;
+    const amp = Math.min(p.amplitude, isFinite(m) ? m : p.amplitude);
+    return amp * Math.sin((this.clock / p.period) * Math.PI * 2 + p.phase);
+  }
+
+  startLoop() {
+    this.lastTs = null;
+    const step = (ts) => {
+      if (this.hovering) { this.raf = null; return; } // halted
+      if (this.lastTs == null) this.lastTs = ts;
+      this.clock += ts - this.lastTs;
+      this.lastTs = ts;
+      const strips = this.strips();
+      strips.forEach((el, i) => {
+        if (el) el.style.transform = "translateX(" + this.driftX(i).toFixed(2) + "px)";
+      });
+      this.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  }
+
+  fetchNow() {
+    fetch("https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + LASTFM_USER + "&api_key=" + LASTFM_KEY + "&format=json&limit=1")
+      .then(function(r) { return r.json(); })
+      .then((d) => {
+        const tracks = d.recenttracks && d.recenttracks.track;
+        const track = Array.isArray(tracks) ? tracks[0] : tracks;
+        if (!track) return;
+        this.setState({
+          nowPlaying: track.name,
+          nowArtist: (track.artist || {})["#text"] || "",
+          isLive: !!((track["@attr"] || {}).nowplaying)
+        });
+      })
+      .catch(function() {});
+  }
+
+  renderVals() {
+    return {
+      containerRef: this.containerRef,
+      pageRef: this.pageRef,
+      panelRef: this.panelRef,
+      tooltipRef: this.tooltipRef,
+      socialsRef: this.socialsRef,
+      socialsWrapRef: this.socialsWrapRef,
+      blogNoteRef: this.blogNoteRef,
+      toggleSocials: (e) => { e.preventDefault(); this.setSocials(!this.socialsOpen); },
+      toggleBlog: (e) => { e.preventDefault(); this.setBlogNote(!this.blogOpen); },
+      nowLabel: (this.state && this.state.nowPlaying && !this.state.isLive) ? "LAST PLAYED" : "NOW PLAYING",
+      nowTrack: (this.state && this.state.nowPlaying) ? (this.state.nowPlaying + " \u2014 " + (this.state.nowArtist || "")) : "E85 \u2013 Don Tolover",
+      onMove: (e) => {
+        const t = this.tooltipRef.current;
+        if (!t) return;
+        t.style.transform = "translate(" + (e.clientX + 18) + "px, " + (e.clientY + 18) + "px)";
+      },
+      goToProjects: () => this.fadeNav("Portfolio Preview.html"),
+      onKey: (e) => { if (e.key === "Enter" || e.key === " ") this.fadeNav("Portfolio Preview.html"); },
+      onEnter: (e) => {
+        // Capture exact current position, halt loop, lock there, then ease to center.
+        this.hovering = true;
+        if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
+        const t = this.tooltipRef.current;
+        if (t) {
+          if (e && e.clientX != null) t.style.transform = "translate(" + (e.clientX + 18) + "px, " + (e.clientY + 18) + "px)";
+          t.style.opacity = "1";
+        }
+        // Expand the projects panel so the full-width rows become visible;
+        // the left column reflows (text re-wraps) to make room.
+        if (this.panelRef.current && window.innerWidth > 900) {
+          // expand to exactly hug the two visible columns (cards are height-derived now)
+          const s = this.strips()[0];
+          this.panelRef.current.style.width = (s ? s.scrollWidth : 784) + "px";
+          this.panelRef.current.style.maxWidth = "70vw";
+        }
+
+        this.strips().forEach((el, i) => {
+          if (!el) return;
+          const x = this.driftX(i);
+          el.style.transform = "translateX(" + x.toFixed(2) + "px)"; // lock at captured pos
+          // force reflow so the transition runs from the locked position
+          void el.offsetWidth;
+          el.style.transition = "transform 900ms cubic-bezier(0.16, 1, 0.3, 1)";
+          el.style.transform = "translateX(0px)"; // decelerate to center
+        });
+      },
+      onLeave: () => {
+        // Turn off centering transition; resume drift immediately from current (locked) position.
+        this.hovering = false;
+        if (this.tooltipRef.current) this.tooltipRef.current.style.opacity = "0";
+        if (this.panelRef.current && window.innerWidth > 900) {
+          this.panelRef.current.style.width = "486px";
+          this.panelRef.current.style.maxWidth = "48vw";
+        }
+
+        this.strips().forEach((el) => { if (el) el.style.transition = "none"; });
+        // re-measure once the panel width transition settles
+        setTimeout(() => this.measure(), 950);
+        this.startLoop();
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

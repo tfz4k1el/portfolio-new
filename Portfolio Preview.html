@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portfolio — preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; background: #fff; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  // Preview-only loader: fetches the clean ESM Portfolio.jsx, removes the
+  // import/export keywords (React + hooks are provided as globals here),
+  // transpiles the JSX, and mounts it. Your Portfolio.jsx stays pristine.
+  (async () => {
+    let src = await (await fetch("./Portfolio.jsx")).text();
+    src = src
+      .replace(/^\s*import\s.+$/gm, "")                              // drop the React import (passed in below)
+      .replace(/export\s+default\s+function\s+Portfolio/, "function Portfolio")
+      .replace(/^\s*export\s+(default\s+)?/gm, "");                  // neutralize remaining exports
+    const code = Babel.transform(src, { presets: [["react", { runtime: "classic" }]] }).code;
+    const factory = new Function(
+      "React", "useRef", "useEffect", "useState", "useMemo", "useCallback",
+      code + "\nreturn Portfolio;"
+    );
+    const Comp = factory(React, React.useRef, React.useEffect, React.useState, React.useMemo, React.useCallback);
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(Comp));
+  })();
+</script>
+</body>
+</html>
