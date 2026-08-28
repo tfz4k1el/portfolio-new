@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/", "destination": "/Portfolio.dc.html" },
+    { "source": "/projects", "destination": "/Portfolio Preview.html" },
     { "source": "/guestbook", "destination": "/Guestbook.dc.html" },
     { "source": "/wordle", "destination": "/Wordle.dc.html" }
   ]

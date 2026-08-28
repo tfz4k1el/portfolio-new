@@ -11,12 +11,7 @@
   <title>Hafiz Yoosuf</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="prefetch" href="Portfolio Preview.html">
-  <link rel="prefetch" href="Portfolio.jsx">
-  <link rel="prefetch" href="https://unpkg.com/react@18/umd/react.production.min.js">
-  <link rel="prefetch" href="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js">
-  <link rel="prefetch" href="https://unpkg.com/@babel/standalone/babel.min.js">
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *{ box-sizing:border-box; }
@@ -49,17 +44,18 @@
     }
     /* Mobile (≤640px) — projects section is a full-width banner: two rows of four */
     @media (max-width: 640px){
-      [data-el="page"]{ height:auto !important; min-height:100vh; overflow:visible !important; flex-direction:column-reverse !important; padding:0 20px !important; gap:8px !important; }
-      [data-el="left"]{ padding:8px 0 32px 0 !important; }
-      [data-el="projects"]{ width:calc(100% + 40px) !important; max-width:none !important; margin:0 -20px; padding:18px 0 0 0 !important; }
-      [data-card]{ width:58vw !important; }
+      [data-el="page"]{ height:auto !important; min-height:100vh; overflow-x:hidden !important; overflow-y:auto !important; flex-direction:column-reverse !important; padding:0 20px !important; gap:8px !important; }
+      [data-el="left"]{ padding:12px 0 36px 0 !important; }
+      [data-el="projects"]{ width:calc(100% + 40px) !important; max-width:none !important; margin:0 -20px; padding:16px 0 0 0 !important; }
+      [data-card]{ width:64vw !important; max-width:280px; min-width:180px; }
       [data-card-extra]{ display:block; }
       [data-row="2"], [data-row="3"]{ display:none !important; }
-      [data-el="nowplaying"]{ margin-top:40px; }
+      [data-el="nowplaying"]{ margin-top:36px; padding-bottom:16px; }
+      [data-socials-popup]{ left:0 !important; top:calc(100% + 8px) !important; transform:none !important; min-width:200px; box-shadow:0 8px 24px rgba(0,0,0,0.12) !important; }
     }
-  @media (max-width: 640px){
-    [data-socials-popup]{ left:0 !important; top:calc(100% + 8px) !important; transform:none !important; min-width:180px; }
-  }
+    @media (max-width: 900px), (hover: none){
+      [data-tooltip]{ display:none !important; }
+    }
   </style>
 </helmet>
 <template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f34951"></rect><text x="50" y="58" text-anchor="middle" font-family="monospace" font-weight="700" font-size="26" fill="#ffffff">HY</text></svg></template>
@@ -111,33 +107,33 @@
 
       <div data-row="0" style="position:relative; flex:none; overflow:hidden; display:flex; flex-direction:row; justify-content:center; align-items:flex-start;">
         <div data-strip="0" style="display:flex; flex-direction:row; gap:10px; align-items:stretch; flex-shrink:0; will-change:transform;">
-          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
-          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
-          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
-          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#ededeb;"><video src="./assets/projects/motion/Infinity.mp4" autoPlay muted loop playsInline aria-label="Infinity motion project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></video></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#ededeb;"><img src="./assets/projects/ui/Noveo.png" alt="Noveo interface project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></img></div>
+          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#ededeb;"><video src="./assets/projects/motion/StockBud.mp4" autoPlay muted loop playsInline aria-label="StockBud motion project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></video></div>
+          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#ededeb;"><img src="./assets/projects/ui/Vire.png" alt="Vire interface project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></img></div>
         </div>
       </div>
 
       <div data-row="1" style="position:relative; flex:none; overflow:hidden; display:flex; flex-direction:row; justify-content:center; align-items:flex-start;">
         <div data-strip="1" style="display:flex; flex-direction:row; gap:10px; align-items:stretch; flex-shrink:0; will-change:transform;">
-          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
-          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
-          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
-          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#ededeb;"><video src="./assets/projects/motion/T2Chat.mp4" autoPlay muted loop playsInline aria-label="T2Chat motion project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></video></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#ededeb;"><img src="./assets/projects/ui/asmitha.png" alt="Asmitha interface project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></img></div>
+          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#ededeb;"><video src="./assets/projects/motion/Vireclub.mp4" autoPlay muted loop playsInline aria-label="Vireclub motion project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></video></div>
+          <div data-card data-card-extra style="width:387px; aspect-ratio:16/9; background:#ededeb;"><img src="./assets/projects/ui/nxhuman.png" alt="NxHuman interface project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></img></div>
         </div>
       </div>
 
       <div data-row="2" style="position:relative; flex:none; overflow:hidden; display:flex; flex-direction:row; justify-content:center; align-items:flex-start;">
         <div data-strip="2" style="display:flex; flex-direction:row; gap:10px; align-items:stretch; flex-shrink:0; will-change:transform;">
-          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
-          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#ededeb;"><video src="./assets/projects/motion/Infinity.mp4" autoPlay muted loop playsInline aria-label="Infinity motion project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></video></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#ededeb;"><img src="./assets/projects/ui/Noveo.png" alt="Noveo interface project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></img></div>
         </div>
       </div>
 
       <div data-row="3" style="position:relative; flex:none; overflow:hidden; display:flex; flex-direction:row; justify-content:center; align-items:flex-start;">
         <div data-strip="3" style="display:flex; flex-direction:row; gap:10px; align-items:stretch; flex-shrink:0; will-change:transform;">
-          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
-          <div data-card style="width:387px; aspect-ratio:16/9; background:#f34951;"></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#ededeb;"><video src="./assets/projects/motion/StockBud.mp4" autoPlay muted loop playsInline aria-label="StockBud motion project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></video></div>
+          <div data-card style="width:387px; aspect-ratio:16/9; background:#ededeb;"><img src="./assets/projects/ui/Vire.png" alt="Vire interface project preview" style="width:100%; height:100%; object-fit:cover; display:block;"></img></div>
         </div>
       </div>
 
@@ -145,7 +141,7 @@
   </div>
 
   <!-- CURSOR TOOLTIP -->
-  <div ref="{{ tooltipRef }}" style="position:fixed; left:0; top:0; opacity:0; pointer-events:none; z-index:50; transition:opacity 150ms ease; background:#000; color:#fff; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:12px; line-height:100%; letter-spacing:0.08em; padding:8px 12px; border-radius:999px; white-space:nowrap;">CLICK TO VIEW ALL PROJECTS</div>
+  <div data-tooltip ref="{{ tooltipRef }}" style="position:fixed; left:0; top:0; opacity:0; pointer-events:none; z-index:50; transition:opacity 150ms ease; background:#000; color:#fff; font-family:'Geist Mono',ui-monospace,monospace; font-weight:500; font-size:12px; line-height:100%; letter-spacing:0.08em; padding:8px 12px; border-radius:999px; white-space:nowrap;">CLICK TO VIEW ALL PROJECTS</div>
 
 </div>
 </x-dc>
@@ -195,7 +191,6 @@ class Component extends DCLogic {
       const s0 = this.containerRef.current.querySelector('[data-strip="0"]');
       if (s0) this.ro.observe(s0);
     }
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this.measure());
     setTimeout(() => this.measure(), 300);
     this.startLoop();
     // Close the socials popover when clicking anywhere outside it.
