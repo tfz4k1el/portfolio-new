@@ -51,16 +51,8 @@ export const COLUMNS = [
   [PROJECTS[2], PROJECTS[5]],
 ];
 
-function VideoPreview({ project, onProgress, onReady }) {
+function VideoPreview({ project }) {
   const videoRef = React.useRef(null);
-
-  const syncProgress = (event) => {
-    const video = event.currentTarget;
-    const buffered = video.duration && video.buffered.length
-      ? video.buffered.end(video.buffered.length - 1) / video.duration
-      : 0;
-    onProgress(project.src, Math.max(0.12, Math.min(buffered, 0.92)));
-  };
 
   const keepMuted = (event) => {
     if (!event.currentTarget.muted) event.currentTarget.muted = true;
@@ -94,11 +86,6 @@ function VideoPreview({ project, onProgress, onReady }) {
       loop
       playsInline
       preload="auto"
-      onLoadedData={(event) => { onProgress(project.src, 0.65); syncProgress(event); }}
-      onProgress={syncProgress}
-      onCanPlay={(event) => { onProgress(project.src, 0.9); syncProgress(event); }}
-      onCanPlayThrough={() => { onProgress(project.src, 1); onReady(project.src); }}
-      onError={() => onReady(project.src)}
       onVolumeChange={keepMuted}
       aria-label={`${project.title} project preview`}
       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
@@ -112,37 +99,6 @@ export default function Portfolio({
   homeHref = "Portfolio.dc.html",
 }) {
   const rootRef = React.useRef(null);
-  const videoProjects = React.useMemo(
-    () => columns.flat().filter((project) => project.mediaType === "video"),
-    [columns],
-  );
-  const [videoProgress, setVideoProgress] = React.useState(() => Object.fromEntries(videoProjects.map((project) => [project.src, 0])));
-  const [readyVideos, setReadyVideos] = React.useState(() => new Set());
-  const [isLoading, setIsLoading] = React.useState(videoProjects.length > 0);
-  const readyCount = readyVideos.size;
-  const loadingProgress = videoProjects.length
-    ? videoProjects.reduce((total, project) => total + (videoProgress[project.src] || 0), 0) / videoProjects.length
-    : 1;
-
-  const handleVideoProgress = React.useCallback((src, value) => {
-    setVideoProgress((current) => ({ ...current, [src]: Math.max(current[src] || 0, value) }));
-  }, []);
-
-  const handleVideoReady = React.useCallback((src) => {
-    setReadyVideos((current) => {
-      if (current.has(src)) return current;
-      const next = new Set(current);
-      next.add(src);
-      return next;
-    });
-    handleVideoProgress(src, 1);
-  }, [handleVideoProgress]);
-
-  React.useEffect(() => {
-    if (!videoProjects.length || readyCount < videoProjects.length) return undefined;
-    const timer = window.setTimeout(() => setIsLoading(false), 220);
-    return () => window.clearTimeout(timer);
-  }, [readyCount, videoProjects.length]);
 
   const fadeNav = (e, href) => {
     e.preventDefault();
@@ -159,7 +115,7 @@ export default function Portfolio({
     <article className="pf-card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div className="pf-media" style={{ width: "100%", aspectRatio: p.aspect || "16 / 10", background: "#ededeb", overflow: "hidden", borderRadius: 3 }}>
         {p.mediaType === "video" ? (
-          <VideoPreview project={p} onProgress={handleVideoProgress} onReady={handleVideoReady} />
+          <VideoPreview project={p} />
         ) : (
           <img src={p.src} alt={`${p.title} project preview`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         )}
@@ -177,13 +133,6 @@ export default function Portfolio({
       <style>{`
         [data-portfolio] *{ box-sizing:border-box; }
         @keyframes pf-in{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
-        [data-portfolio] .pf-loader{ position:fixed; inset:0; z-index:20; display:grid; place-items:center; padding:24px; background:#fff; transition:opacity 420ms ease, visibility 420ms ease; }
-        [data-portfolio] .pf-loader.is-hidden{ opacity:0; visibility:hidden; pointer-events:none; }
-        [data-portfolio] .pf-loader-inner{ width:min(100%, 360px); }
-        [data-portfolio] .pf-loader-heading{ display:flex; justify-content:space-between; gap:20px; margin-bottom:12px; font-family:${mono}; font-size:11px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:#454545; }
-        [data-portfolio] .pf-loader-track{ height:2px; overflow:hidden; background:#e3e3e1; }
-        [data-portfolio] .pf-loader-progress{ width:100%; height:100%; background:#000; transform-origin:left center; transition:transform 220ms ease; }
-        [data-portfolio] .pf-loader-meta{ margin-top:10px; font-family:${mono}; font-size:11px; color:#777; }
         @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.01ms !important; animation-delay:0ms !important; transition-duration:0.01ms !important; } }
         [data-portfolio] a.pf-name:hover{ opacity:0.5; }
         [data-portfolio] .pf-grid{ column-count:3; column-gap:16px; }
@@ -192,19 +141,6 @@ export default function Portfolio({
         @media (max-width:900px){ [data-portfolio] .pf-grid{ column-count:2; } }
         @media (max-width:640px){ [data-portfolio]{ padding:18px 20px 48px !important; } [data-portfolio] .pf-grid{ column-count:1; } }
       `}</style>
-
-      <div className={`pf-loader${isLoading ? "" : " is-hidden"}`} data-pf-loader aria-live="polite" aria-label="Loading project videos">
-        <div className="pf-loader-inner">
-          <div className="pf-loader-heading">
-            <span>Loading motion</span>
-            <span>{Math.round(loadingProgress * 100)}%</span>
-          </div>
-          <div className="pf-loader-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(loadingProgress * 100)}>
-            <div className="pf-loader-progress" style={{ transform: `scaleX(${Math.max(loadingProgress, 0.02)})` }} />
-          </div>
-          <div className="pf-loader-meta">{readyCount} / {videoProjects.length} videos ready</div>
-        </div>
-      </div>
 
       <header style={{ display: "flex", alignItems: "center", padding: "4px 0", opacity: 0, animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards" }}>
         <a className="pf-name" href={homeHref} onClick={(e) => fadeNav(e, homeHref)} style={{ fontFamily: sans, fontWeight: 700, fontSize: 20, lineHeight: "100%", color: "#000", textDecoration: "none", transition: "opacity 150ms" }}>{name}</a>
