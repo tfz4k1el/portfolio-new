@@ -1,0 +1,957 @@
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+const LASTFM_USER = "Zafkiel69";
+const LASTFM_KEY = "c34fdb3897e465413e4fbf9d94b8da85";
+
+export default function Home() {
+  const navigate = useNavigate();
+
+  const containerRef = useRef(null);
+  const pageRef = useRef(null);
+  const panelRef = useRef(null);
+  const tooltipRef = useRef(null);
+  const socialsRef = useRef(null);
+  const socialsWrapRef = useRef(null);
+  const blogNoteRef = useRef(null);
+
+  const [socialsOpen, setSocialsOpen] = useState(false);
+  const [blogOpen, setBlogOpen] = useState(false);
+  const [nowPlaying, setNowPlaying] = useState(null);
+  const [nowArtist, setNowArtist] = useState(null);
+  const [isLive, setIsLive] = useState(false);
+
+  // Preloader state
+  const [loadingPercent, setLoadingPercent] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Drift loop animation references
+  const clockRef = useRef(0);
+  const lastTsRef = useRef(null);
+  const hoveringRef = useRef(false);
+  const rafRef = useRef(null);
+  const maxShiftRef = useRef([0, 0, 0, 0]);
+
+  // Seeded drift parameters
+  const paramsRef = useRef([
+    { amplitude: 38 + 0.137 * 46, period: 5200 + 0.642 * 5200, phase: 0.871 * Math.PI * 2 },
+    { amplitude: 38 + 0.642 * 46, period: 5200 + 0.318 * 5200, phase: 0.137 * Math.PI * 2 },
+    { amplitude: 38 + 0.318 * 46, period: 5200 + 0.871 * 5200, phase: 0.642 * Math.PI * 2 },
+    { amplitude: 38 + 0.871 * 46, period: 5200 + 0.137 * 5200, phase: 0.318 * Math.PI * 2 },
+  ]);
+
+  const strips = useCallback(() => {
+    const root = containerRef.current;
+    if (!root) return [];
+    return [0, 1, 2, 3].map((i) => root.querySelector(`[data-strip="${i}"]`));
+  }, []);
+
+  const measure = useCallback(() => {
+    const root = containerRef.current;
+    if (!root) return;
+    maxShiftRef.current = [0, 1, 2, 3].map((i) => {
+      const strip = root.querySelector(`[data-strip="${i}"]`);
+      if (!strip || !strip.parentElement) return Infinity;
+      return Math.max(0, (strip.scrollWidth - strip.parentElement.clientWidth) / 2);
+    });
+  }, []);
+
+  const driftX = useCallback((i) => {
+    const p = paramsRef.current[i];
+    if (!p) return 0;
+    const m = maxShiftRef.current[i] ?? Infinity;
+    const amp = Math.min(p.amplitude, isFinite(m) ? m : p.amplitude);
+    return amp * Math.sin((clockRef.current / p.period) * Math.PI * 2 + p.phase);
+  }, []);
+
+  const startLoop = useCallback(() => {
+    lastTsRef.current = null;
+    const step = (ts) => {
+      if (hoveringRef.current) {
+        rafRef.current = null;
+        return;
+      }
+      if (lastTsRef.current == null) lastTsRef.current = ts;
+      clockRef.current += ts - lastTsRef.current;
+      lastTsRef.current = ts;
+
+      const stripElements = strips();
+      stripElements.forEach((el, i) => {
+        if (el) el.style.transform = `translateX(${driftX(i).toFixed(2)}px)`;
+      });
+      rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+  }, [strips, driftX]);
+
+  // Preload media assets (both webm videos and webp images)
+  useEffect(() => {
+    const videoUrls = [
+      "/assets/projects/motion/Infinity.webm",
+      "/assets/projects/motion/StockBud.webm",
+      "/assets/projects/motion/T2Chat.webm",
+      "/assets/projects/motion/Vireclub.webm",
+      "/assets/projects/motion/Extraordinary.webm",
+      "/assets/projects/motion/Muster AI.webm",
+    ];
+
+    const imageUrls = [
+      "/assets/projects/ui/Noveo.webp",
+      "/assets/projects/ui/Vire.webp",
+      "/assets/projects/ui/asmitha.webp",
+      "/assets/projects/ui/nxhuman.webp",
+    ];
+
+    const allUrls = [...videoUrls.slice(0, 4), ...imageUrls];
+    const progressMap = new Map(allUrls.map((url) => [url, 0]));
+    let done = false;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      setLoadingPercent(100);
+      window.setTimeout(() => setIsLoaded(true), 200);
+    };
+
+    const updateUI = (url) => {
+      if (done) return;
+      progressMap.set(url, 1);
+      const total = allUrls.reduce((acc, u) => acc + (progressMap.get(u) || 0), 0);
+      const pct = Math.min(100, Math.round((total / allUrls.length) * 100));
+      setLoadingPercent(pct);
+      if (pct >= 100) finish();
+    };
+
+    const safetyTimer = window.setTimeout(finish, 2800);
+
+    // Track images
+    imageUrls.forEach((src) => {
+      const img = new Image();
+      img.onload = () => updateUI(src);
+      img.onerror = () => updateUI(src);
+      img.src = src;
+      if (img.complete) updateUI(src);
+    });
+
+    // Track videos
+    videoUrls.slice(0, 4).forEach((src) => {
+      const vid = document.createElement("video");
+      vid.preload = "auto";
+      vid.muted = true;
+      const onReady = () => updateUI(src);
+      vid.addEventListener("loadeddata", onReady, { once: true });
+      vid.addEventListener("canplay", onReady, { once: true });
+      vid.addEventListener("error", onReady, { once: true });
+      vid.src = src;
+      if (vid.readyState >= 2) updateUI(src);
+    });
+
+    return () => window.clearTimeout(safetyTimer);
+  }, []);
+
+  // Initialize loop, observers, and event listeners
+  useEffect(() => {
+    measure();
+    const onResize = () => measure();
+    window.addEventListener("resize", onResize);
+
+    let ro;
+    if (window.ResizeObserver && containerRef.current) {
+      ro = new ResizeObserver(() => measure());
+      ro.observe(containerRef.current);
+      const s0 = containerRef.current.querySelector('[data-strip="0"]');
+      if (s0) ro.observe(s0);
+    }
+    const tMeasure = setTimeout(() => measure(), 300);
+    startLoop();
+
+    const onDocClick = (e) => {
+      if (socialsOpen && socialsWrapRef.current && !socialsWrapRef.current.contains(e.target)) {
+        setSocialsOpen(false);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("click", onDocClick);
+      if (ro) ro.disconnect();
+      clearTimeout(tMeasure);
+    };
+  }, [measure, startLoop, socialsOpen]);
+
+  // Last.fm live track fetch
+  useEffect(() => {
+    if (!LASTFM_USER || !LASTFM_KEY) return;
+    const fetchNow = () => {
+      fetch(
+        `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${LASTFM_USER}&api_key=${LASTFM_KEY}&format=json&limit=1`
+      )
+        .then((r) => r.json())
+        .then((d) => {
+          const tracks = d.recenttracks && d.recenttracks.track;
+          const track = Array.isArray(tracks) ? tracks[0] : tracks;
+          if (!track) return;
+          setNowPlaying(track.name);
+          setNowArtist((track.artist || {})["#text"] || "");
+          setIsLive(Boolean((track["@attr"] || {}).nowplaying));
+        })
+        .catch(() => {});
+    };
+
+    fetchNow();
+    const interval = setInterval(fetchNow, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Hover handlers for drifting panel
+  const handleEnter = (e) => {
+    hoveringRef.current = true;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    const t = tooltipRef.current;
+    if (t) {
+      if (e && e.clientX != null) {
+        t.style.transform = `translate(${e.clientX + 18}px, ${e.clientY + 18}px)`;
+      }
+      t.style.opacity = "1";
+    }
+
+    if (panelRef.current && window.innerWidth > 900) {
+      const s = strips()[0];
+      panelRef.current.style.width = (s ? s.scrollWidth : 784) + "px";
+      panelRef.current.style.maxWidth = "70vw";
+    }
+
+    strips().forEach((el, i) => {
+      if (!el) return;
+      const x = driftX(i);
+      el.style.transform = `translateX(${x.toFixed(2)}px)`;
+      void el.offsetWidth;
+      el.style.transition = "transform 900ms cubic-bezier(0.16, 1, 0.3, 1)";
+      el.style.transform = "translateX(0px)";
+    });
+  };
+
+  const handleLeave = () => {
+    hoveringRef.current = false;
+    if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
+
+    if (panelRef.current && window.innerWidth > 900) {
+      panelRef.current.style.width = "486px";
+      panelRef.current.style.maxWidth = "48vw";
+    }
+
+    strips().forEach((el) => {
+      if (el) el.style.transition = "none";
+    });
+
+    setTimeout(() => measure(), 950);
+    startLoop();
+  };
+
+  const handleMove = (e) => {
+    const t = tooltipRef.current;
+    if (!t) return;
+    t.style.transform = `translate(${e.clientX + 18}px, ${e.clientY + 18}px)`;
+  };
+
+  const goToProjects = () => {
+    navigate("/projects");
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      goToProjects();
+    }
+  };
+
+  const nowLabel = nowPlaying && !isLive ? "LAST PLAYED" : "NOW PLAYING";
+  const nowTrack = nowPlaying ? `${nowPlaying} — ${nowArtist}` : "E85 – Don Tolover";
+
+  const handleVideoMetadata = (e) => {
+    e.currentTarget.muted = true;
+    e.currentTarget.play().catch(() => {});
+  };
+
+  return (
+    <div
+      data-screen-label="Portfolio"
+      data-el="page"
+      ref={pageRef}
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "100vh",
+        overflow: "hidden",
+        background: "#0a0a0a",
+        display: "flex",
+        flexDirection: "row",
+        gap: "10px",
+        padding: "0 32px",
+        alignItems: "stretch",
+        fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        color: "#ffffff",
+      }}
+    >
+      {/* MINIMALIST DARK LOADER */}
+      <div
+        data-main-loader
+        className={isLoaded ? "is-hidden" : ""}
+        aria-live="polite"
+        aria-label="Loading"
+      >
+        <div data-main-loader-inner>
+          <div data-main-loader-heading>
+            <span>Loading</span>
+            <span data-main-loader-percent>{loadingPercent}%</span>
+          </div>
+          <div
+            data-main-loader-track
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow={loadingPercent}
+          >
+            <div
+              data-main-loader-progress
+              style={{ transform: `scaleX(${Math.max(loadingPercent / 100, 0.02)})` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* LEFT COLUMN */}
+      <div
+        data-el="left"
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          flexGrow: 1,
+          minWidth: 0,
+          padding: "18px 0",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "4px 0",
+            opacity: 0,
+            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
+          }}
+        >
+          <Link to="/" className="brand-link">
+            Hafiz Yoosuf
+          </Link>
+        </div>
+
+        <div
+          style={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            gap: "24px",
+            maxWidth: "720px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              opacity: 0,
+              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Geist Mono', ui-monospace, monospace",
+                fontWeight: 500,
+                fontSize: "14px",
+                lineHeight: "100%",
+                letterSpacing: "0.08em",
+                color: "#8a8a8a",
+              }}
+            >
+              ABOUT
+            </span>
+            <span
+              style={{
+                fontFamily: "'Geist', sans-serif",
+                fontWeight: 600,
+                fontSize: "16px",
+                lineHeight: "145%",
+                color: "#e5e5e5",
+                textWrap: "pretty",
+              }}
+            >
+              Second-year engineering student and freelance designer. I do UI/UX
+              Designs — clean interfaces, things that actually make sense to use — plus
+              Motion Graphics and AMVs, mostly in{" "}
+              <a
+                href="https://www.figma.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#ffffff",
+                  textDecoration: "underline",
+                  textDecorationColor: "var(--accent)",
+                  textDecorationThickness: "1px",
+                  textUnderlineOffset: "3px",
+                  cursor: "pointer",
+                  transition: "color 180ms ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
+              >
+                Figma
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 8 8"
+                  fill="none"
+                  style={{ verticalAlign: "super", marginLeft: "2px" }}
+                >
+                  <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
+                </svg>
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://www.adobe.com/products/aftereffects.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#ffffff",
+                  textDecoration: "underline",
+                  textDecorationColor: "var(--accent)",
+                  textDecorationThickness: "1px",
+                  textUnderlineOffset: "3px",
+                  cursor: "pointer",
+                  transition: "color 180ms ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
+              >
+                After Effects
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 8 8"
+                  fill="none"
+                  style={{ verticalAlign: "super", marginLeft: "2px" }}
+                >
+                  <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
+                </svg>
+              </a>
+              . On the side I&apos;m working on phii. When I&apos;m not working I&apos;m usually wandering irl, some of my best ideas show up mid-walk. Got an interesting idea?{" "}
+              <a
+                href="mailto:hafizyoosuf710@gmail.com"
+                style={{
+                  color: "#ffffff",
+                  textDecoration: "underline",
+                  textDecorationColor: "var(--accent)",
+                  textDecorationThickness: "1px",
+                  textUnderlineOffset: "3px",
+                  cursor: "pointer",
+                  transition: "color 180ms ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
+              >
+                get in touch
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 8 8"
+                  fill="none"
+                  style={{ verticalAlign: "super", marginLeft: "2px" }}
+                >
+                  <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
+                </svg>
+              </a>
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              opacity: 0,
+              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Geist Mono', ui-monospace, monospace",
+                fontWeight: 500,
+                fontSize: "14px",
+                lineHeight: "100%",
+                letterSpacing: "0.08em",
+                color: "#8a8a8a",
+              }}
+            >
+              LINKS
+            </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px", alignItems: "flex-start" }}>
+              <div ref={socialsWrapRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <button
+                  type="button"
+                  className={`nav-btn ${socialsOpen ? "is-active" : ""}`}
+                  onClick={() => setSocialsOpen((v) => !v)}
+                >
+                  SOCIALS
+                </button>
+                <div
+                  data-socials-popup
+                  ref={socialsRef}
+                  style={{
+                    position: "absolute",
+                    left: "calc(100% + 20px)",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    opacity: socialsOpen ? 1 : 0,
+                    visibility: socialsOpen ? "visible" : "hidden",
+                    transition: "opacity 180ms ease, visibility 180ms ease",
+                    background: "#121212",
+                    border: "1px solid #27272a",
+                    borderRadius: "10px",
+                    boxShadow: "0 16px 36px rgba(0,0,0,0.6)",
+                    padding: "16px 18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                    zIndex: 40,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <a
+                    href="https://instagram.com/z4rchx"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="social-item"
+                  >
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontWeight: 500, fontSize: "11px", letterSpacing: "0.08em", color: "#71717a", width: "82px" }}>
+                      INSTAGRAM
+                    </span>
+                    <span className="social-handle" style={{ fontFamily: "'Geist', sans-serif", fontWeight: 600, fontSize: "14px", color: "#ffffff", transition: "color 180ms ease" }}>
+                      z4rchx
+                    </span>
+                  </a>
+                  <a
+                    href="https://x.com/z4f3x"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="social-item"
+                  >
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontWeight: 500, fontSize: "11px", letterSpacing: "0.08em", color: "#71717a", width: "82px" }}>
+                      X
+                    </span>
+                    <span className="social-handle" style={{ fontFamily: "'Geist', sans-serif", fontWeight: 600, fontSize: "14px", color: "#ffffff", transition: "color 180ms ease" }}>
+                      z4f3x
+                    </span>
+                  </a>
+                  <div className="social-item">
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontWeight: 500, fontSize: "11px", letterSpacing: "0.08em", color: "#71717a", width: "82px" }}>
+                      YOUTUBE
+                    </span>
+                    <span className="social-handle" style={{ fontFamily: "'Geist', sans-serif", fontWeight: 600, fontSize: "14px", color: "#ffffff" }}>
+                      —
+                    </span>
+                  </div>
+                  <div className="social-item">
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontWeight: 500, fontSize: "11px", letterSpacing: "0.08em", color: "#71717a", width: "82px" }}>
+                      DISCORD
+                    </span>
+                    <span className="social-handle" style={{ fontFamily: "'Geist', sans-serif", fontWeight: 600, fontSize: "14px", color: "#ffffff" }}>
+                      —
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <button
+                  type="button"
+                  className={`nav-btn ${blogOpen ? "is-active" : ""}`}
+                  onClick={() => setBlogOpen((v) => !v)}
+                >
+                  BLOG
+                </button>
+                <span
+                  ref={blogNoteRef}
+                  style={{
+                    position: "absolute",
+                    left: "calc(100% + 14px)",
+                    opacity: blogOpen ? 1 : 0,
+                    visibility: blogOpen ? "visible" : "hidden",
+                    transition: "opacity 180ms ease, visibility 180ms ease",
+                    fontFamily: "'Geist Mono', ui-monospace, monospace",
+                    fontWeight: 500,
+                    fontSize: "12px",
+                    letterSpacing: "0.08em",
+                    color: "var(--accent)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  COMING SOON
+                </span>
+              </div>
+
+              <a href="#" className="nav-btn">
+                RESUME
+              </a>
+              <Link to="/guestbook" className="nav-btn">
+                GUESTBOOK
+              </Link>
+              <Link to="/wordle" className="nav-btn">
+                WORDLE
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div
+          data-el="nowplaying"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            padding: "4px 0",
+            opacity: 0,
+            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 240ms forwards",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'Geist Mono', ui-monospace, monospace",
+              fontWeight: 500,
+              fontSize: "14px",
+              lineHeight: "100%",
+              letterSpacing: "0.08em",
+              color: "#8a8a8a",
+            }}
+          >
+            {nowLabel}
+          </span>
+          <span
+            style={{
+              fontFamily: "'Geist', sans-serif",
+              fontWeight: 600,
+              fontSize: "16px",
+              lineHeight: "100%",
+              color: "#ffffff",
+            }}
+          >
+            {nowTrack}
+          </span>
+        </div>
+      </div>
+
+      {/* PROJECTS DRIFTING PANEL */}
+      <div
+        data-el="projects"
+        ref={panelRef}
+        style={{
+          position: "relative",
+          width: "486px",
+          maxWidth: "48vw",
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          transition: "width 900ms cubic-bezier(0.16,1,0.3,1), max-width 900ms cubic-bezier(0.16,1,0.3,1)",
+          opacity: 0,
+          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
+        }}
+      >
+        <div
+          data-el="proj-inner"
+          ref={containerRef}
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
+          onMouseMove={handleMove}
+          onClick={goToProjects}
+          role="link"
+          aria-label="View all projects"
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          style={{
+            position: "relative",
+            width: "100%",
+            overflow: "hidden",
+            background: "#0a0a0a",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            cursor: "pointer",
+          }}
+        >
+          {/* ROW 0 */}
+          <div
+            data-row="0"
+            style={{
+              position: "relative",
+              flex: "none",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "flex-start",
+            }}
+          >
+            <div
+              data-strip="0"
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "10px",
+                alignItems: "stretch",
+                flexShrink: 0,
+                willChange: "transform",
+              }}
+            >
+              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <video
+                  data-main-video
+                  src="/assets/projects/motion/Infinity.webm"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  onLoadedMetadata={handleVideoMetadata}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <img
+                  src="/assets/projects/ui/Noveo.webp"
+                  alt="Noveo interface project preview"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+              <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <video
+                  data-main-video
+                  src="/assets/projects/motion/StockBud.webm"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  onLoadedMetadata={handleVideoMetadata}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+              <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <img
+                  src="/assets/projects/ui/Vire.webp"
+                  alt="Vire interface project preview"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ROW 1 */}
+          <div
+            data-row="1"
+            style={{
+              position: "relative",
+              flex: "none",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "flex-start",
+            }}
+          >
+            <div
+              data-strip="1"
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "10px",
+                alignItems: "stretch",
+                flexShrink: 0,
+                willChange: "transform",
+              }}
+            >
+              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <video
+                  data-main-video
+                  src="/assets/projects/motion/T2Chat.webm"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  onLoadedMetadata={handleVideoMetadata}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <img
+                  src="/assets/projects/ui/asmitha.webp"
+                  alt="Asmitha interface project preview"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+              <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <video
+                  data-main-video
+                  src="/assets/projects/motion/Vireclub.webm"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  onLoadedMetadata={handleVideoMetadata}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+              <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <img
+                  src="/assets/projects/ui/nxhuman.webp"
+                  alt="NxHuman interface project preview"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ROW 2 */}
+          <div
+            data-row="2"
+            style={{
+              position: "relative",
+              flex: "none",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "flex-start",
+            }}
+          >
+            <div
+              data-strip="2"
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "10px",
+                alignItems: "stretch",
+                flexShrink: 0,
+                willChange: "transform",
+              }}
+            >
+              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <video
+                  data-main-video
+                  src="/assets/projects/motion/Extraordinary.webm"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  onLoadedMetadata={handleVideoMetadata}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <img
+                  src="/assets/projects/ui/Noveo.webp"
+                  alt="Noveo interface project preview"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ROW 3 */}
+          <div
+            data-row="3"
+            style={{
+              position: "relative",
+              flex: "none",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "flex-start",
+            }}
+          >
+            <div
+              data-strip="3"
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "10px",
+                alignItems: "stretch",
+                flexShrink: 0,
+                willChange: "transform",
+              }}
+            >
+              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <video
+                  data-main-video
+                  src="/assets/projects/motion/Muster AI.webm"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  onLoadedMetadata={handleVideoMetadata}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
+                <img
+                  src="/assets/projects/ui/Vire.webp"
+                  alt="Vire interface project preview"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CURSOR TOOLTIP */}
+      <div
+        data-tooltip
+        ref={tooltipRef}
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          opacity: 0,
+          pointerEvents: "none",
+          zIndex: 50,
+          transition: "opacity 150ms ease",
+          background: "#ffffff",
+          color: "#000000",
+          fontFamily: "'Geist Mono', ui-monospace, monospace",
+          fontWeight: 600,
+          fontSize: "12px",
+          lineHeight: "100%",
+          letterSpacing: "0.08em",
+          padding: "8px 14px",
+          borderRadius: "999px",
+          whiteSpace: "nowrap",
+          boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
+          border: "1px solid rgba(243, 73, 81, 0.4)",
+        }}
+      >
+        CLICK TO VIEW ALL PROJECTS
+      </div>
+    </div>
+  );
+}
