@@ -57,7 +57,7 @@ export default function Guestbook() {
         position: "relative",
         width: "100%",
         minHeight: "100vh",
-        background: "#0a0a0a",
+        background: "transparent",
         display: "flex",
         flexDirection: "column",
         padding: "18px 32px 64px",

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { PROJECTS, PROJECT_COLUMNS } from "../data/projects";
 
@@ -7,6 +7,44 @@ const MONO = "'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
 
 function ProjectCard({ project }) {
   const isVideo = project.mediaType === "video";
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (!isVideo || !videoRef.current || !("IntersectionObserver" in window)) return;
+    const vid = videoRef.current;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !document.hidden) {
+            vid.play().catch(() => { });
+          } else {
+            vid.pause();
+          }
+        });
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(vid);
+
+    const onVis = () => {
+      if (document.hidden) {
+        vid.pause();
+      } else {
+        const rect = vid.getBoundingClientRect();
+        if (rect.bottom > 0 && rect.top < window.innerHeight) {
+          vid.play().catch(() => { });
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [isVideo]);
 
   return (
     <article className="pf-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -22,17 +60,18 @@ function ProjectCard({ project }) {
       >
         {isVideo ? (
           <video
+            ref={videoRef}
             src={project.src}
-            autoPlay
             muted
             loop
             playsInline
-            preload="auto"
+            preload="metadata"
+            disablePictureInPicture
+            disableRemotePlayback
             onLoadedMetadata={(e) => {
               e.currentTarget.muted = true;
-              e.currentTarget.play().catch(() => {});
             }}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
           />
         ) : (
           <img
@@ -97,7 +136,7 @@ export default function Projects() {
         position: "relative",
         width: "100%",
         minHeight: "100vh",
-        background: "#0a0a0a",
+        background: "transparent",
         display: "flex",
         flexDirection: "column",
         padding: "18px 32px 64px",

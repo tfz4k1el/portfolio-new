@@ -32,12 +32,12 @@ export default function Home() {
   const rafRef = useRef(null);
   const maxShiftRef = useRef([0, 0, 0, 0]);
 
-  // Seeded drift parameters
+  // Seeded drift parameters - calibrated for smooth, gentle, subtle drift
   const paramsRef = useRef([
-    { amplitude: 38 + 0.137 * 46, period: 5200 + 0.642 * 5200, phase: 0.871 * Math.PI * 2 },
-    { amplitude: 38 + 0.642 * 46, period: 5200 + 0.318 * 5200, phase: 0.137 * Math.PI * 2 },
-    { amplitude: 38 + 0.318 * 46, period: 5200 + 0.871 * 5200, phase: 0.642 * Math.PI * 2 },
-    { amplitude: 38 + 0.871 * 46, period: 5200 + 0.137 * 5200, phase: 0.318 * Math.PI * 2 },
+    { amplitude: 22 + 0.137 * 18, period: 8000 + 0.642 * 5000, phase: 0.871 * Math.PI * 2 },
+    { amplitude: 22 + 0.642 * 18, period: 8000 + 0.318 * 5000, phase: 0.137 * Math.PI * 2 },
+    { amplitude: 22 + 0.318 * 18, period: 8000 + 0.871 * 5000, phase: 0.642 * Math.PI * 2 },
+    { amplitude: 22 + 0.871 * 18, period: 8000 + 0.137 * 5000, phase: 0.318 * Math.PI * 2 },
   ]);
 
   const strips = useCallback(() => {
@@ -77,24 +77,15 @@ export default function Home() {
 
       const stripElements = strips();
       stripElements.forEach((el, i) => {
-        if (el) el.style.transform = `translateX(${driftX(i).toFixed(2)}px)`;
+        if (el) el.style.transform = `translate3d(${driftX(i).toFixed(2)}px, 0, 0)`;
       });
       rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
   }, [strips, driftX]);
 
-  // Preload media assets (both webm videos and webp images)
+  // Preload UI images and verify initial video readiness cleanly without hogging bandwidth
   useEffect(() => {
-    const videoUrls = [
-      "/assets/projects/motion/Infinity.webm",
-      "/assets/projects/motion/StockBud.webm",
-      "/assets/projects/motion/T2Chat.webm",
-      "/assets/projects/motion/Vireclub.webm",
-      "/assets/projects/motion/Extraordinary.webm",
-      "/assets/projects/motion/Muster AI.webm",
-    ];
-
     const imageUrls = [
       "/assets/projects/ui/Noveo.webp",
       "/assets/projects/ui/Vire.webp",
@@ -102,7 +93,7 @@ export default function Home() {
       "/assets/projects/ui/nxhuman.webp",
     ];
 
-    const allUrls = [...videoUrls.slice(0, 4), ...imageUrls];
+    const allUrls = [...imageUrls];
     const progressMap = new Map(allUrls.map((url) => [url, 0]));
     let done = false;
 
@@ -122,9 +113,8 @@ export default function Home() {
       if (pct >= 100) finish();
     };
 
-    const safetyTimer = window.setTimeout(finish, 2800);
+    const safetyTimer = window.setTimeout(finish, 1800);
 
-    // Track images
     imageUrls.forEach((src) => {
       const img = new Image();
       img.onload = () => updateUI(src);
@@ -133,20 +123,52 @@ export default function Home() {
       if (img.complete) updateUI(src);
     });
 
-    // Track videos
-    videoUrls.slice(0, 4).forEach((src) => {
-      const vid = document.createElement("video");
-      vid.preload = "auto";
-      vid.muted = true;
-      const onReady = () => updateUI(src);
-      vid.addEventListener("loadeddata", onReady, { once: true });
-      vid.addEventListener("canplay", onReady, { once: true });
-      vid.addEventListener("error", onReady, { once: true });
-      vid.src = src;
-      if (vid.readyState >= 2) updateUI(src);
-    });
-
     return () => window.clearTimeout(safetyTimer);
+  }, []);
+
+  // Performance-optimised IntersectionObserver for videos:
+  // Pauses hidden or off-screen videos so only visible videos consume GPU decode bandwidth
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !("IntersectionObserver" in window)) return;
+
+    const vids = Array.from(container.querySelectorAll("video"));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const vid = entry.target;
+          if (entry.isIntersecting && !document.hidden) {
+            vid.play().catch(() => { });
+          } else {
+            vid.pause();
+          }
+        });
+      },
+      { root: container, threshold: 0.1 }
+    );
+
+    vids.forEach((v) => observer.observe(v));
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        vids.forEach((v) => v.pause());
+      } else {
+        vids.forEach((v) => {
+          const rect = v.getBoundingClientRect();
+          if (rect.right > 0 && rect.left < window.innerWidth && rect.bottom > 0 && rect.top < window.innerHeight) {
+            v.play().catch(() => { });
+          }
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   // Initialize loop, observers, and event listeners
@@ -197,7 +219,7 @@ export default function Home() {
           setNowArtist((track.artist || {})["#text"] || "");
           setIsLive(Boolean((track["@attr"] || {}).nowplaying));
         })
-        .catch(() => {});
+        .catch(() => { });
     };
 
     fetchNow();
@@ -229,10 +251,10 @@ export default function Home() {
     strips().forEach((el, i) => {
       if (!el) return;
       const x = driftX(i);
-      el.style.transform = `translateX(${x.toFixed(2)}px)`;
+      el.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
       void el.offsetWidth;
       el.style.transition = "transform 900ms cubic-bezier(0.16, 1, 0.3, 1)";
-      el.style.transform = "translateX(0px)";
+      el.style.transform = "translate3d(0px, 0, 0)";
     });
   };
 
@@ -275,7 +297,7 @@ export default function Home() {
 
   const handleVideoMetadata = (e) => {
     e.currentTarget.muted = true;
-    e.currentTarget.play().catch(() => {});
+    e.currentTarget.play().catch(() => { });
   };
 
   return (
@@ -288,7 +310,7 @@ export default function Home() {
         width: "100%",
         height: "100vh",
         overflow: "hidden",
-        background: "#0a0a0a",
+        background: "transparent",
         display: "flex",
         flexDirection: "row",
         gap: "10px",
@@ -520,8 +542,10 @@ export default function Home() {
                     opacity: socialsOpen ? 1 : 0,
                     visibility: socialsOpen ? "visible" : "hidden",
                     transition: "opacity 180ms ease, visibility 180ms ease",
-                    background: "#121212",
-                    border: "1px solid #27272a",
+                    background: "rgba(18, 12, 16, 0.85)",
+                    backdropFilter: "blur(14px)",
+                    WebkitBackdropFilter: "blur(14px)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
                     borderRadius: "10px",
                     boxShadow: "0 16px 36px rgba(0,0,0,0.6)",
                     padding: "16px 18px",
@@ -687,7 +711,7 @@ export default function Home() {
             position: "relative",
             width: "100%",
             overflow: "hidden",
-            background: "#0a0a0a",
+            background: "transparent",
             display: "flex",
             flexDirection: "column",
             gap: "10px",
@@ -726,9 +750,11 @@ export default function Home() {
                   muted
                   loop
                   playsInline
-                  preload="auto"
+                  preload="metadata"
+                  disablePictureInPicture
+                  disableRemotePlayback
                   onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
                 />
               </div>
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
@@ -746,9 +772,11 @@ export default function Home() {
                   muted
                   loop
                   playsInline
-                  preload="auto"
+                  preload="metadata"
+                  disablePictureInPicture
+                  disableRemotePlayback
                   onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
                 />
               </div>
               <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
@@ -793,9 +821,11 @@ export default function Home() {
                   muted
                   loop
                   playsInline
-                  preload="auto"
+                  preload="metadata"
+                  disablePictureInPicture
+                  disableRemotePlayback
                   onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
                 />
               </div>
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
@@ -813,9 +843,11 @@ export default function Home() {
                   muted
                   loop
                   playsInline
-                  preload="auto"
+                  preload="metadata"
+                  disablePictureInPicture
+                  disableRemotePlayback
                   onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
                 />
               </div>
               <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
@@ -860,9 +892,11 @@ export default function Home() {
                   muted
                   loop
                   playsInline
-                  preload="auto"
+                  preload="metadata"
+                  disablePictureInPicture
+                  disableRemotePlayback
                   onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
                 />
               </div>
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
@@ -907,9 +941,11 @@ export default function Home() {
                   muted
                   loop
                   playsInline
-                  preload="auto"
+                  preload="metadata"
+                  disablePictureInPicture
+                  disableRemotePlayback
                   onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
                 />
               </div>
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
