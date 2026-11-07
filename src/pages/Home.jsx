@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import BinaryRadarLoader from "../components/BinaryRadarLoader";
 
 const LASTFM_USER = "Zafkiel69";
 const LASTFM_KEY = "c34fdb3897e465413e4fbf9d94b8da85";
@@ -14,6 +15,7 @@ export default function Home() {
   const socialsRef = useRef(null);
   const socialsWrapRef = useRef(null);
   const blogNoteRef = useRef(null);
+  const leftColRef = useRef(null);
 
   const [socialsOpen, setSocialsOpen] = useState(false);
   const [blogOpen, setBlogOpen] = useState(false);
@@ -21,14 +23,16 @@ export default function Home() {
   const [nowArtist, setNowArtist] = useState(null);
   const [isLive, setIsLive] = useState(false);
 
-  // Preloader state
-  const [loadingPercent, setLoadingPercent] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
+  // Motion designer scramble and radar states
+  const [scrambleDone, setScrambleDone] = useState(false);
+  const [linksReady, setLinksReady] = useState(false);
+  const [showRadarLoader, setShowRadarLoader] = useState(true);
 
   // Drift loop animation references
   const clockRef = useRef(0);
   const lastTsRef = useRef(null);
   const hoveringRef = useRef(false);
+  const realMouseOverRef = useRef(false);
   const rafRef = useRef(null);
   const maxShiftRef = useRef([0, 0, 0, 0]);
 
@@ -84,46 +88,189 @@ export default function Home() {
     rafRef.current = requestAnimationFrame(step);
   }, [strips, driftX]);
 
-  // Preload UI images and verify initial video readiness cleanly without hogging bandwidth
-  useEffect(() => {
-    const imageUrls = [
-      "/assets/projects/ui/Noveo.webp",
-      "/assets/projects/ui/Vire.webp",
-      "/assets/projects/ui/asmitha.webp",
-      "/assets/projects/ui/nxhuman.webp",
-    ];
+  // Hover handlers for drifting panel
+  const handleEnter = useCallback((e) => {
+    realMouseOverRef.current = true;
+    hoveringRef.current = true;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    const t = tooltipRef.current;
+    if (t) {
+      if (e && e.clientX != null) {
+        t.style.transform = `translate(${e.clientX + 18}px, ${e.clientY + 18}px)`;
+      }
+      t.style.opacity = "1";
+    }
 
-    const allUrls = [...imageUrls];
-    const progressMap = new Map(allUrls.map((url) => [url, 0]));
-    let done = false;
+    if (panelRef.current && window.innerWidth > 900) {
+      const s = strips()[0];
+      panelRef.current.style.width = (s ? s.scrollWidth : 784) + "px";
+      panelRef.current.style.maxWidth = "70vw";
+    }
 
-    const finish = () => {
-      if (done) return;
-      done = true;
-      setLoadingPercent(100);
-      window.setTimeout(() => setIsLoaded(true), 200);
-    };
+    strips().forEach((el, i) => {
+      if (!el) return;
+      const x = driftX(i);
+      el.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
+      void el.offsetWidth;
+      el.style.transition = "transform 900ms cubic-bezier(0.16, 1, 0.3, 1)";
+      el.style.transform = "translate3d(0px, 0, 0)";
+    });
+  }, [strips, driftX]);
 
-    const updateUI = (url) => {
-      if (done) return;
-      progressMap.set(url, 1);
-      const total = allUrls.reduce((acc, u) => acc + (progressMap.get(u) || 0), 0);
-      const pct = Math.min(100, Math.round((total / allUrls.length) * 100));
-      setLoadingPercent(pct);
-      if (pct >= 100) finish();
-    };
+  const handleLeave = useCallback(() => {
+    realMouseOverRef.current = false;
+    hoveringRef.current = false;
+    if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
 
-    const safetyTimer = window.setTimeout(finish, 1800);
+    if (panelRef.current && window.innerWidth > 900) {
+      panelRef.current.style.width = "486px";
+      panelRef.current.style.maxWidth = "48vw";
+    }
 
-    imageUrls.forEach((src) => {
-      const img = new Image();
-      img.onload = () => updateUI(src);
-      img.onerror = () => updateUI(src);
-      img.src = src;
-      if (img.complete) updateUI(src);
+    strips().forEach((el) => {
+      if (el) el.style.transition = "none";
     });
 
-    return () => window.clearTimeout(safetyTimer);
+    setTimeout(() => measure(), 950);
+    startLoop();
+  }, [strips, measure, startLoop]);
+
+  // Initial projects bar hover hold for 3.0s, then smooth release and drift
+  useEffect(() => {
+    hoveringRef.current = true;
+    if (panelRef.current && window.innerWidth > 900) {
+      panelRef.current.style.width = "784px";
+      panelRef.current.style.maxWidth = "70vw";
+    }
+    strips().forEach((el) => {
+      if (el) el.style.transform = "translate3d(0px, 0, 0)";
+    });
+
+    const releaseTimer = setTimeout(() => {
+      if (!realMouseOverRef.current) {
+        handleLeave();
+      }
+    }, 3000);
+
+    return () => clearTimeout(releaseTimer);
+  }, [handleLeave, strips]);
+
+  // Full-website Text Scramble Animation Engine:
+  // Staggered top-to-bottom, left-to-right across 1.6s
+  // Mix of random Latin letters and Japanese Katakana, flashing in accent color #f34951,
+  // turning white #ffffff right before locking into final character.
+  useEffect(() => {
+    const leftEl = leftColRef.current;
+    if (!leftEl) return;
+
+    const GLYPHS = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ#%&?";
+    const getRandomGlyph = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+
+    const targets = Array.from(leftEl.querySelectorAll("[data-scramble]"));
+    const charItems = [];
+
+    targets.forEach((target) => {
+      const text = target.textContent;
+      const finalColor = target.getAttribute("data-final-color") || "#ffffff";
+      target.textContent = "";
+
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        const s = document.createElement("span");
+        s.textContent = ch;
+        // Space characters remain visible to guarantee zero layout shift
+        s.style.visibility = ch === " " ? "visible" : "hidden";
+        target.appendChild(s);
+        charItems.push({
+          el: s,
+          char: ch,
+          finalColor,
+          top: 0,
+          left: 0,
+        });
+      }
+    });
+
+    // Measure screen coordinates for exact 2D reading order
+    charItems.forEach((item) => {
+      const r = item.el.getBoundingClientRect();
+      item.top = r.top;
+      item.left = r.left;
+    });
+
+    // Sort by line (tolerance 8px), then left-to-right
+    charItems.sort((a, b) => {
+      if (Math.abs(a.top - b.top) > 8) {
+        return a.top - b.top;
+      }
+      return a.left - b.left;
+    });
+
+    const total = charItems.length;
+    const startMs = 40;
+    const endMs = 1600;
+
+    charItems.forEach((item, index) => {
+      const tResolve = startMs + (index / Math.max(total - 1, 1)) * (endMs - startMs);
+      const tScramble = Math.max(0, tResolve - 140);
+      const tWhite = tResolve - 40;
+      item.tResolve = tResolve;
+      item.tScramble = tScramble;
+      item.tWhite = tWhite;
+    });
+
+    let startTs = null;
+    let animId = null;
+
+    const step = (ts) => {
+      if (!startTs) startTs = ts;
+      const elapsed = ts - startTs;
+
+      for (let i = 0; i < total; i++) {
+        const item = charItems[i];
+        if (item.char === " ") continue;
+
+        if (elapsed < item.tScramble) {
+          item.el.style.visibility = "hidden";
+        } else if (elapsed < item.tWhite) {
+          item.el.style.visibility = "visible";
+          item.el.textContent = getRandomGlyph();
+          item.el.style.color = "#f34951";
+        } else if (elapsed < item.tResolve) {
+          item.el.style.visibility = "visible";
+          item.el.textContent = item.char;
+          item.el.style.color = "#ffffff";
+        } else {
+          item.el.style.visibility = "visible";
+          item.el.textContent = item.char;
+          item.el.style.color = item.finalColor;
+        }
+      }
+
+      if (elapsed < 1600) {
+        animId = requestAnimationFrame(step);
+      } else {
+        // Scramble complete at exactly 1.6s!
+        for (let i = 0; i < total; i++) {
+          const item = charItems[i];
+          item.el.style.visibility = "visible";
+          item.el.textContent = item.char;
+          item.el.style.color = item.finalColor;
+        }
+        setScrambleDone(true);
+        // Links smoothly appear over 250ms right after text animation finishes
+        setLinksReady(true);
+      }
+    };
+
+    animId = requestAnimationFrame(step);
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
   }, []);
 
   // Performance-optimised IntersectionObserver for videos:
@@ -227,54 +374,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Hover handlers for drifting panel
-  const handleEnter = (e) => {
-    hoveringRef.current = true;
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-    const t = tooltipRef.current;
-    if (t) {
-      if (e && e.clientX != null) {
-        t.style.transform = `translate(${e.clientX + 18}px, ${e.clientY + 18}px)`;
-      }
-      t.style.opacity = "1";
-    }
-
-    if (panelRef.current && window.innerWidth > 900) {
-      const s = strips()[0];
-      panelRef.current.style.width = (s ? s.scrollWidth : 784) + "px";
-      panelRef.current.style.maxWidth = "70vw";
-    }
-
-    strips().forEach((el, i) => {
-      if (!el) return;
-      const x = driftX(i);
-      el.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
-      void el.offsetWidth;
-      el.style.transition = "transform 900ms cubic-bezier(0.16, 1, 0.3, 1)";
-      el.style.transform = "translate3d(0px, 0, 0)";
-    });
-  };
-
-  const handleLeave = () => {
-    hoveringRef.current = false;
-    if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
-
-    if (panelRef.current && window.innerWidth > 900) {
-      panelRef.current.style.width = "486px";
-      panelRef.current.style.maxWidth = "48vw";
-    }
-
-    strips().forEach((el) => {
-      if (el) el.style.transition = "none";
-    });
-
-    setTimeout(() => measure(), 950);
-    startLoop();
-  };
-
   const handleMove = (e) => {
     const t = tooltipRef.current;
     if (!t) return;
@@ -320,36 +419,10 @@ export default function Home() {
         color: "#ffffff",
       }}
     >
-      {/* MINIMALIST DARK LOADER */}
-      <div
-        data-main-loader
-        className={isLoaded ? "is-hidden" : ""}
-        aria-live="polite"
-        aria-label="Loading"
-      >
-        <div data-main-loader-inner>
-          <div data-main-loader-heading>
-            <span>Loading</span>
-            <span data-main-loader-percent>{loadingPercent}%</span>
-          </div>
-          <div
-            data-main-loader-track
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            aria-valuenow={loadingPercent}
-          >
-            <div
-              data-main-loader-progress
-              style={{ transform: `scaleX(${Math.max(loadingPercent / 100, 0.02)})` }}
-            />
-          </div>
-        </div>
-      </div>
-
       {/* LEFT COLUMN */}
       <div
         data-el="left"
+        ref={leftColRef}
         style={{
           position: "relative",
           display: "flex",
@@ -364,12 +437,10 @@ export default function Home() {
             display: "flex",
             alignItems: "center",
             padding: "4px 0",
-            opacity: 0,
-            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
           }}
         >
           <Link to="/" className="brand-link">
-            Hafiz Yoosuf
+            <span data-scramble data-final-color="#ffffff">Hafiz Yoosuf</span>
           </Link>
         </div>
 
@@ -388,8 +459,6 @@ export default function Home() {
               display: "flex",
               flexDirection: "column",
               gap: "16px",
-              opacity: 0,
-              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards",
             }}
           >
             <span
@@ -402,7 +471,7 @@ export default function Home() {
                 color: "#8a8a8a",
               }}
             >
-              ABOUT
+              <span data-scramble data-final-color="#8a8a8a">ABOUT</span>
             </span>
             <span
               style={{
@@ -414,86 +483,57 @@ export default function Home() {
                 textWrap: "pretty",
               }}
             >
-              Second-year engineering student and freelance designer. I do UI/UX
-              Designs — clean interfaces, things that actually make sense to use — plus
-              Motion Graphics and AMVs, mostly in{" "}
+              <span data-scramble data-final-color="#e5e5e5">
+                Second-year engineering student and freelance designer. I do UI/UX
+                Designs — clean interfaces, things that actually make sense to use — plus
+                Motion Graphics and AMVs, mostly in{" "}
+              </span>
               <a
                 href="https://www.figma.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  color: "#ffffff",
-                  textDecoration: "underline",
-                  textDecorationColor: "var(--accent)",
-                  textDecorationThickness: "1px",
-                  textUnderlineOffset: "3px",
-                  cursor: "pointer",
-                  transition: "color 180ms ease",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
+                className={`about-link ${linksReady ? "is-ready" : ""}`}
               >
-                Figma
+                <span data-scramble data-final-color="#ffffff">Figma</span>
                 <svg
                   width="8"
                   height="8"
                   viewBox="0 0 8 8"
                   fill="none"
-                  style={{ verticalAlign: "super", marginLeft: "2px" }}
-                >
-                  <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
-                </svg>
-              </a>{" "}
-              and{" "}
-              <a
-                href="https://www.adobe.com/products/aftereffects.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: "#ffffff",
-                  textDecoration: "underline",
-                  textDecorationColor: "var(--accent)",
-                  textDecorationThickness: "1px",
-                  textUnderlineOffset: "3px",
-                  cursor: "pointer",
-                  transition: "color 180ms ease",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
-              >
-                After Effects
-                <svg
-                  width="8"
-                  height="8"
-                  viewBox="0 0 8 8"
-                  fill="none"
-                  style={{ verticalAlign: "super", marginLeft: "2px" }}
                 >
                   <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
                 </svg>
               </a>
-              . On the side I&apos;m working on phii. When I&apos;m not working I&apos;m usually wandering irl, some of my best ideas show up mid-walk. Got an interesting idea?{" "}
+              <span data-scramble data-final-color="#e5e5e5"> and </span>
               <a
-                href="mailto:hafizyoosuf710@gmail.com"
-                style={{
-                  color: "#ffffff",
-                  textDecoration: "underline",
-                  textDecorationColor: "var(--accent)",
-                  textDecorationThickness: "1px",
-                  textUnderlineOffset: "3px",
-                  cursor: "pointer",
-                  transition: "color 180ms ease",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
+                href="https://www.adobe.com/products/aftereffects.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`about-link ${linksReady ? "is-ready" : ""}`}
               >
-                get in touch
+                <span data-scramble data-final-color="#ffffff">After Effects</span>
                 <svg
                   width="8"
                   height="8"
                   viewBox="0 0 8 8"
                   fill="none"
-                  style={{ verticalAlign: "super", marginLeft: "2px" }}
+                >
+                  <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
+                </svg>
+              </a>
+              <span data-scramble data-final-color="#e5e5e5">
+                . On the side I&apos;m working on phii. When I&apos;m not working I&apos;m usually wandering irl, some of my best ideas show up mid-walk. Got an interesting idea?{" "}
+              </span>
+              <a
+                href="mailto:hafizyoosuf710@gmail.com"
+                className={`about-link ${linksReady ? "is-ready" : ""}`}
+              >
+                <span data-scramble data-final-color="#ffffff">get in touch</span>
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 8 8"
+                  fill="none"
                 >
                   <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
                 </svg>
@@ -506,8 +546,6 @@ export default function Home() {
               display: "flex",
               flexDirection: "column",
               gap: "16px",
-              opacity: 0,
-              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
             }}
           >
             <span
@@ -520,7 +558,7 @@ export default function Home() {
                 color: "#8a8a8a",
               }}
             >
-              LINKS
+              <span data-scramble data-final-color="#8a8a8a">LINKS</span>
             </span>
             <div style={{ display: "flex", flexDirection: "column", gap: "2px", alignItems: "flex-start" }}>
               <div ref={socialsWrapRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
@@ -529,7 +567,7 @@ export default function Home() {
                   className={`nav-btn ${socialsOpen ? "is-active" : ""}`}
                   onClick={() => setSocialsOpen((v) => !v)}
                 >
-                  SOCIALS
+                  <span data-scramble data-final-color="#ffffff">SOCIALS</span>
                 </button>
                 <div
                   data-socials-popup
@@ -607,7 +645,7 @@ export default function Home() {
                   className={`nav-btn ${blogOpen ? "is-active" : ""}`}
                   onClick={() => setBlogOpen((v) => !v)}
                 >
-                  BLOG
+                  <span data-scramble data-final-color="#ffffff">BLOG</span>
                 </button>
                 <span
                   ref={blogNoteRef}
@@ -630,13 +668,13 @@ export default function Home() {
               </div>
 
               <a href="#" className="nav-btn">
-                RESUME
+                <span data-scramble data-final-color="#ffffff">RESUME</span>
               </a>
               <Link to="/guestbook" className="nav-btn">
-                GUESTBOOK
+                <span data-scramble data-final-color="#ffffff">GUESTBOOK</span>
               </Link>
               <Link to="/wordle" className="nav-btn">
-                WORDLE
+                <span data-scramble data-final-color="#ffffff">WORDLE</span>
               </Link>
             </div>
           </div>
@@ -649,8 +687,6 @@ export default function Home() {
             flexDirection: "column",
             gap: "8px",
             padding: "4px 0",
-            opacity: 0,
-            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 240ms forwards",
           }}
         >
           <span
@@ -663,7 +699,11 @@ export default function Home() {
               color: "#8a8a8a",
             }}
           >
-            {nowLabel}
+            {scrambleDone ? (
+              <span>{nowLabel}</span>
+            ) : (
+              <span data-scramble data-final-color="#8a8a8a">{nowLabel}</span>
+            )}
           </span>
           <span
             style={{
@@ -674,7 +714,11 @@ export default function Home() {
               color: "#ffffff",
             }}
           >
-            {nowTrack}
+            {scrambleDone ? (
+              <span>{nowTrack}</span>
+            ) : (
+              <span data-scramble data-final-color="#ffffff">{nowTrack}</span>
+            )}
           </span>
         </div>
       </div>
@@ -685,15 +729,13 @@ export default function Home() {
         ref={panelRef}
         style={{
           position: "relative",
-          width: "486px",
-          maxWidth: "48vw",
+          width: typeof window !== "undefined" && window.innerWidth > 900 ? "784px" : "100%",
+          maxWidth: typeof window !== "undefined" && window.innerWidth > 900 ? "70vw" : "100%",
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           transition: "width 900ms cubic-bezier(0.16,1,0.3,1), max-width 900ms cubic-bezier(0.16,1,0.3,1)",
-          opacity: 0,
-          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
         }}
       >
         <div
@@ -720,6 +762,9 @@ export default function Home() {
             cursor: "pointer",
           }}
         >
+          {showRadarLoader && (
+            <BinaryRadarLoader onComplete={() => setShowRadarLoader(false)} />
+          )}
           {/* ROW 0 */}
           <div
             data-row="0"
