@@ -80,20 +80,22 @@ html, body {
   }
 }
 
-@keyframes radar-sweep-zeros {
+/* 4th Loop Transition Wipes: Zeroes wiped out ahead of beam, Media wiped in trailing beam */
+@keyframes wipe-in-media {
   0% {
-    clip-path: polygon(
-      evenodd,
-      0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%,
-      -24% 0%, -8% 0%, -11% 35%, -7% 65%, -15% 100%, -31% 100%, -23% 65%, -27% 35%
-    );
+    clip-path: polygon(0% 0%, -24% 0%, -27% 35%, -23% 65%, -31% 100%, 0% 100%);
   }
   100% {
-    clip-path: polygon(
-      evenodd,
-      0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%,
-      110% 0%, 126% 0%, 123% 35%, 127% 65%, 119% 100%, 103% 100%, 111% 65%, 107% 35%
-    );
+    clip-path: polygon(0% 0%, 110% 0%, 107% 35%, 111% 65%, 103% 100%, 0% 100%);
+  }
+}
+
+@keyframes wipe-out-zeros {
+  0% {
+    clip-path: polygon(-8% 0%, 100% 0%, 100% 100%, -15% 100%, -7% 65%, -11% 35%);
+  }
+  100% {
+    clip-path: polygon(126% 0%, 100% 0%, 100% 100%, 119% 100%, 127% 65%, 123% 35%);
   }
 }
 
@@ -308,8 +310,20 @@ html, body {
 
 [data-card] video,
 [data-card] img {
-  opacity: var(--media-opacity, 1);
-  transition: opacity 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+[data-el="proj-inner"].is-loading-media [data-card] video,
+[data-el="proj-inner"].is-loading-media [data-card] img {
+  clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+}
+
+[data-el="proj-inner"].is-wiping-media [data-card] video,
+[data-el="proj-inner"].is-wiping-media [data-card] img {
+  animation: wipe-in-media 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 [data-card-extra] {

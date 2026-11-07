@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 
-export default function BinaryRadarLoader({ isFading = false }) {
+export default function BinaryRadarLoader({ isWiping = false }) {
   // Pre-generate monospace strings of 0s and 1s that fill a project card
   const zerosString = useMemo(() => "0".repeat(1500), []);
   const onesString = useMemo(() => "1".repeat(1500), []);
@@ -15,12 +15,10 @@ export default function BinaryRadarLoader({ isFading = false }) {
         pointerEvents: "none",
         overflow: "hidden",
         background: "transparent",
-        opacity: isFading ? 0 : 1,
-        transition: "opacity 300ms cubic-bezier(0.16, 1, 0.3, 1)",
       }}
       aria-hidden="true"
     >
-      {/* BASE LAYER: Grid of zeros, masked with exclusion so zeroes disappear under the sweep */}
+      {/* BASE LAYER: Grid of zeros. In loops 1-3, stays 100% normal. In loop 4, wiped out as the beam passes. */}
       <div
         className="radar-grid radar-grid-zeros"
         style={{
@@ -33,16 +31,18 @@ export default function BinaryRadarLoader({ isFading = false }) {
           wordBreak: "break-all",
           userSelect: "none",
           padding: "6px",
-          color: "rgba(255, 255, 255, 0.2)",
+          color: "rgba(255, 255, 255, 0.22)",
           zIndex: 1,
           background: "transparent",
-          animation: "radar-sweep-zeros 0.8s cubic-bezier(0.25, 1, 0.5, 1) infinite",
+          animation: isWiping
+            ? "wipe-out-zeros 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards"
+            : "none",
         }}
       >
         {zerosString}
       </div>
 
-      {/* TOP LAYER: Warped uneven mask scanning left to right with glowing ones (0.8s loop, subtle bloom) */}
+      {/* TOP LAYER: Warped uneven mask scanning left to right with glowing ones (increased neon bloom) */}
       <div
         className="radar-beam-mask"
         style={{
@@ -50,7 +50,9 @@ export default function BinaryRadarLoader({ isFading = false }) {
           inset: 0,
           zIndex: 2,
           background: "transparent",
-          animation: "radar-sweep-ones 0.8s cubic-bezier(0.25, 1, 0.5, 1) infinite",
+          animation: isWiping
+            ? "radar-sweep-ones 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards"
+            : "radar-sweep-ones 0.8s cubic-bezier(0.25, 1, 0.5, 1) infinite",
         }}
       >
         <div
@@ -66,8 +68,8 @@ export default function BinaryRadarLoader({ isFading = false }) {
             userSelect: "none",
             padding: "6px",
             color: "#f34951",
-            fontWeight: 600,
-            textShadow: "0 0 3px rgba(243, 73, 81, 0.75)",
+            fontWeight: 700,
+            textShadow: "0 0 6px #f34951, 0 0 12px rgba(243, 73, 81, 0.65)",
           }}
         >
           {onesString}

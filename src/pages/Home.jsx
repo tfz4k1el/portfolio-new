@@ -27,21 +27,23 @@ export default function Home() {
   const [scrambleDone, setScrambleDone] = useState(false);
   const [linksReady, setLinksReady] = useState(false);
   const [showRadarLoader, setShowRadarLoader] = useState(true);
-  const [radarFading, setRadarFading] = useState(false);
+  const [isWiping, setIsWiping] = useState(false);
 
-  // Lazy loading binary radar runs for 2.4s total (3 loops of 0.8s) across project cards
+  // Lazy loading binary radar: 4 loops of 0.8s = 3.2s total
   useEffect(() => {
-    const fadeTimer = setTimeout(() => {
-      setRadarFading(true);
+    // At 2.4s (start of 4th loop): zeroes wiped out by ones, media wipes in
+    const wipeTimer = setTimeout(() => {
+      setIsWiping(true);
     }, 2400);
 
-    const removeTimer = setTimeout(() => {
+    // At 3.2s (end of 4th loop): wipe complete, unmount loader
+    const completeTimer = setTimeout(() => {
       setShowRadarLoader(false);
-    }, 2750);
+    }, 3200);
 
     return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
+      clearTimeout(wipeTimer);
+      clearTimeout(completeTimer);
     };
   }, []);
 
@@ -166,11 +168,12 @@ export default function Home() {
       if (el) el.style.transform = "translate3d(0px, 0, 0)";
     });
 
+    // Release projects bar after 4th loop wipe completes (3.4s)
     const releaseTimer = setTimeout(() => {
       if (!realMouseOverRef.current) {
         handleLeave();
       }
-    }, 3000);
+    }, 3400);
 
     return () => clearTimeout(releaseTimer);
   }, [handleLeave, strips]);
@@ -758,6 +761,7 @@ export default function Home() {
         <div
           data-el="proj-inner"
           ref={containerRef}
+          className={showRadarLoader ? (isWiping ? "is-wiping-media" : "is-loading-media") : ""}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
           onMouseMove={handleMove}
@@ -775,7 +779,6 @@ export default function Home() {
             flexDirection: "column",
             gap: "10px",
             cursor: "pointer",
-            "--media-opacity": showRadarLoader && !radarFading ? 0 : 1,
           }}
         >
           {/* ROW 0 */}
@@ -803,7 +806,7 @@ export default function Home() {
               }}
             >
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <video
                   data-main-video
                   src="/assets/projects/motion/Infinity.webm"
@@ -819,7 +822,7 @@ export default function Home() {
                 />
               </div>
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <img
                   src="/assets/projects/ui/Noveo.webp"
                   alt="Noveo interface project preview"
@@ -827,7 +830,7 @@ export default function Home() {
                 />
               </div>
               <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <video
                   data-main-video
                   src="/assets/projects/motion/StockBud.webm"
@@ -843,7 +846,7 @@ export default function Home() {
                 />
               </div>
               <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <img
                   src="/assets/projects/ui/Vire.webp"
                   alt="Vire interface project preview"
@@ -878,7 +881,7 @@ export default function Home() {
               }}
             >
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <video
                   data-main-video
                   src="/assets/projects/motion/T2Chat.webm"
@@ -894,7 +897,7 @@ export default function Home() {
                 />
               </div>
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <img
                   src="/assets/projects/ui/asmitha.webp"
                   alt="Asmitha interface project preview"
@@ -902,7 +905,7 @@ export default function Home() {
                 />
               </div>
               <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <video
                   data-main-video
                   src="/assets/projects/motion/Vireclub.webm"
@@ -918,7 +921,7 @@ export default function Home() {
                 />
               </div>
               <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <img
                   src="/assets/projects/ui/nxhuman.webp"
                   alt="NxHuman interface project preview"
@@ -953,7 +956,7 @@ export default function Home() {
               }}
             >
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <video
                   data-main-video
                   src="/assets/projects/motion/Extraordinary.webm"
@@ -969,7 +972,7 @@ export default function Home() {
                 />
               </div>
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <img
                   src="/assets/projects/ui/Noveo.webp"
                   alt="Noveo interface project preview"
@@ -1004,7 +1007,7 @@ export default function Home() {
               }}
             >
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <video
                   data-main-video
                   src="/assets/projects/motion/Muster AI.webm"
@@ -1020,7 +1023,7 @@ export default function Home() {
                 />
               </div>
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                {showRadarLoader && <BinaryRadarLoader isFading={radarFading} />}
+                {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <img
                   src="/assets/projects/ui/Vire.webp"
                   alt="Vire interface project preview"
