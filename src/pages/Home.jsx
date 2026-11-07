@@ -228,12 +228,12 @@ export default function Home() {
 
     const total = charItems.length;
     const startMs = 40;
-    const endMs = 1600;
+    const endMs = 2000;
 
     charItems.forEach((item, index) => {
       const tResolve = startMs + (index / Math.max(total - 1, 1)) * (endMs - startMs);
-      const tScramble = Math.max(0, tResolve - 140);
-      const tWhite = tResolve - 40;
+      const tScramble = Math.max(0, tResolve - 160);
+      const tWhite = tResolve - 45;
       item.tResolve = tResolve;
       item.tScramble = tScramble;
       item.tWhite = tWhite;
@@ -267,10 +267,10 @@ export default function Home() {
         }
       }
 
-      if (elapsed < 1600) {
+      if (elapsed < 2000) {
         animId = requestAnimationFrame(step);
       } else {
-        // Scramble complete at exactly 1.6s!
+        // Scramble complete at exactly 2.0s!
         for (let i = 0; i < total; i++) {
           const item = charItems[i];
           item.el.style.visibility = "visible";
@@ -775,6 +775,7 @@ export default function Home() {
             flexDirection: "column",
             gap: "10px",
             cursor: "pointer",
+            "--media-opacity": showRadarLoader && !radarFading ? 0 : 1,
           }}
         >
           {/* ROW 0 */}

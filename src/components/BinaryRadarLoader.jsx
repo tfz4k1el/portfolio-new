@@ -14,13 +14,13 @@ export default function BinaryRadarLoader({ isFading = false }) {
         zIndex: 10,
         pointerEvents: "none",
         overflow: "hidden",
-        background: "#080406",
-        opacity: isFading ? 0 : 0.85,
+        background: "transparent",
+        opacity: isFading ? 0 : 1,
         transition: "opacity 300ms cubic-bezier(0.16, 1, 0.3, 1)",
       }}
       aria-hidden="true"
     >
-      {/* BASE LAYER: Grid of zeros */}
+      {/* BASE LAYER: Grid of zeros, masked with exclusion so zeroes disappear under the sweep */}
       <div
         className="radar-grid radar-grid-zeros"
         style={{
@@ -33,23 +33,24 @@ export default function BinaryRadarLoader({ isFading = false }) {
           wordBreak: "break-all",
           userSelect: "none",
           padding: "6px",
-          color: "rgba(255, 255, 255, 0.22)",
+          color: "rgba(255, 255, 255, 0.2)",
           zIndex: 1,
+          background: "transparent",
+          animation: "radar-sweep-zeros 0.8s cubic-bezier(0.25, 1, 0.5, 1) infinite",
         }}
       >
         {zerosString}
       </div>
 
-      {/* TOP LAYER: 16% width rectangle mask scanning left to right with grid of ones (0.8s loop) */}
+      {/* TOP LAYER: Warped uneven mask scanning left to right with glowing ones (0.8s loop, subtle bloom) */}
       <div
         className="radar-beam-mask"
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 2,
-          background: "#080406",
-          animation: "radar-sweep 0.8s cubic-bezier(0.25, 1, 0.5, 1) infinite",
-          filter: "drop-shadow(0 0 14px rgba(243, 73, 81, 0.85))",
+          background: "transparent",
+          animation: "radar-sweep-ones 0.8s cubic-bezier(0.25, 1, 0.5, 1) infinite",
         }}
       >
         <div
@@ -65,8 +66,8 @@ export default function BinaryRadarLoader({ isFading = false }) {
             userSelect: "none",
             padding: "6px",
             color: "#f34951",
-            fontWeight: 700,
-            textShadow: "0 0 8px #f34951, 0 0 16px rgba(243, 73, 81, 0.95)",
+            fontWeight: 600,
+            textShadow: "0 0 3px rgba(243, 73, 81, 0.75)",
           }}
         >
           {onesString}

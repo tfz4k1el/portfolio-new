@@ -324,6 +324,16 @@ export default function HarnessBackground() {
     };
   }, []);
 
+  const [bgVisible, setBgVisible] = useState(false);
+
+  useEffect(() => {
+    // Keep background gradient off for the first 0.4s, then fade up over 0.4s
+    const timer = setTimeout(() => {
+      setBgVisible(true);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div
       className="harness-bg-root"
@@ -337,56 +347,66 @@ export default function HarnessBackground() {
         background: "#070406",
       }}
     >
-      {/* DeepSeek Harness Inspired Ambient Radial Gradient (Red, Pink, White) */}
       <div
-        className="harness-radial-layer"
+        className="harness-gradient-wrap"
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "radial-gradient(ellipse at 82% 38%, rgba(255, 195, 218, 0.35) 0%, rgba(243, 73, 81, 0.24) 28%, rgba(140, 18, 36, 0.14) 55%, rgba(7, 4, 6, 0.95) 85%)",
-          opacity: 0.9,
+          opacity: bgVisible ? 1 : 0,
+          transition: "opacity 400ms cubic-bezier(0.16, 1, 0.3, 1)",
         }}
-      />
+      >
+        {/* DeepSeek Harness Inspired Ambient Radial Gradient (Red, Pink, White) */}
+        <div
+          className="harness-radial-layer"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(ellipse at 82% 38%, rgba(255, 195, 218, 0.35) 0%, rgba(243, 73, 81, 0.24) 28%, rgba(140, 18, 36, 0.14) 55%, rgba(7, 4, 6, 0.95) 85%)",
+            opacity: 0.9,
+          }}
+        />
 
-      {/* DeepSeek Harness Orthogonal Tech Grid Matrix */}
-      <div
-        className="harness-grid-layer"
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundPosition: "-1.8px -1.8px",
-          backgroundSize: "80px 80px",
-          backgroundImage:
-            "conic-gradient(from 90deg at 2px 2px, transparent 75%, rgba(255, 255, 255, 0.015) 0)",
-          opacity: 0.85,
-        }}
-      />
+        {/* DeepSeek Harness Orthogonal Tech Grid Matrix */}
+        <div
+          className="harness-grid-layer"
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundPosition: "-1.8px -1.8px",
+            backgroundSize: "80px 80px",
+            backgroundImage:
+              "conic-gradient(from 90deg at 2px 2px, transparent 75%, rgba(255, 255, 255, 0.015) 0)",
+            opacity: 0.85,
+          }}
+        />
 
-      {/* WebGL2 Fluid Canvas */}
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          opacity: 0,
-          transition: "opacity 800ms ease",
-          display: webglSupported ? "block" : "none",
-        }}
-      />
+        {/* WebGL2 Fluid Canvas */}
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            opacity: 0,
+            transition: "opacity 800ms ease",
+            display: webglSupported ? "block" : "none",
+          }}
+        />
 
-      {/* Subtle vignette for contrast */}
-      <div
-        className="harness-scrim-layer"
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(7, 4, 6, 0.65) 100%)",
-        }}
-      />
+        {/* Subtle vignette for contrast */}
+        <div
+          className="harness-scrim-layer"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(7, 4, 6, 0.65) 100%)",
+          }}
+        />
+      </div>
     </div>
   );
 }
