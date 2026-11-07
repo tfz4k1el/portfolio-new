@@ -279,6 +279,11 @@ html, body {
 }
 
 /* Responsive banner row layout */
+[data-card] {
+  position: relative;
+  overflow: hidden;
+}
+
 [data-card-extra] {
   display: none;
 }
@@ -300,9 +305,7 @@ html, body {
   }
   [data-el="proj-inner"] {
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: transparent;
   }
   [data-row] {
     flex: 1 1 0 !important;
@@ -312,6 +315,8 @@ html, body {
     height: 100%;
   }
   [data-card] {
+    position: relative;
+    overflow: hidden;
     width: auto !important;
     height: 100%;
   }
