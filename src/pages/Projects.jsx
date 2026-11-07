@@ -52,7 +52,6 @@ function ProjectCard({ project }) {
         className="pf-media"
         style={{
           width: "100%",
-          aspectRatio: project.aspect || "16 / 10",
           background: "#171717",
           overflow: "hidden",
           borderRadius: "3px",
@@ -71,7 +70,7 @@ function ProjectCard({ project }) {
             onLoadedMetadata={(e) => {
               e.currentTarget.muted = true;
             }}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
+            style={{ width: "100%", height: "auto", display: "block", willChange: "transform", transform: "translateZ(0)" }}
           />
         ) : (
           <img
@@ -79,7 +78,7 @@ function ProjectCard({ project }) {
             alt={`${project.title} project preview`}
             loading="lazy"
             decoding="async"
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            style={{ width: "100%", height: "auto", display: "block" }}
           />
         )}
       </div>
