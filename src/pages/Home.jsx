@@ -29,6 +29,9 @@ export default function Home() {
   const [showRadarLoader, setShowRadarLoader] = useState(true);
   const [isWiping, setIsWiping] = useState(false);
 
+  const pendingTrackRef = useRef(null);
+  const scrambleDoneRef = useRef(false);
+
   // Lazy loading binary radar: 4 loops of 0.8s = 3.2s total
   useEffect(() => {
     // At 2.4s (start of 4th loop): zeroes wiped out by ones, media wipes in
@@ -240,6 +243,7 @@ export default function Home() {
       item.tResolve = tResolve;
       item.tScramble = tScramble;
       item.tWhite = tWhite;
+      item.phase = 0; // 0: hidden, 1: scrambling, 2: white, 3: resolved
     });
 
     let startTs = null;
@@ -252,21 +256,32 @@ export default function Home() {
       for (let i = 0; i < total; i++) {
         const item = charItems[i];
         if (item.char === " ") continue;
+        if (item.phase === 3) continue;
 
         if (elapsed < item.tScramble) {
-          item.el.style.visibility = "hidden";
+          if (item.phase !== 0) {
+            item.el.style.visibility = "hidden";
+            item.phase = 0;
+          }
         } else if (elapsed < item.tWhite) {
-          item.el.style.visibility = "visible";
+          if (item.phase !== 1) {
+            item.el.style.visibility = "visible";
+            item.el.style.color = "#f34951";
+            item.phase = 1;
+          }
           item.el.textContent = getRandomGlyph();
-          item.el.style.color = "#f34951";
         } else if (elapsed < item.tResolve) {
-          item.el.style.visibility = "visible";
-          item.el.textContent = item.char;
-          item.el.style.color = "#ffffff";
+          if (item.phase !== 2) {
+            item.el.style.visibility = "visible";
+            item.el.textContent = item.char;
+            item.el.style.color = "#ffffff";
+            item.phase = 2;
+          }
         } else {
           item.el.style.visibility = "visible";
           item.el.textContent = item.char;
           item.el.style.color = item.finalColor;
+          item.phase = 3;
         }
       }
 
@@ -279,10 +294,21 @@ export default function Home() {
           item.el.style.visibility = "visible";
           item.el.textContent = item.char;
           item.el.style.color = item.finalColor;
+          item.phase = 3;
         }
+        scrambleDoneRef.current = true;
         setScrambleDone(true);
         // Links smoothly appear over 250ms right after text animation finishes
         setLinksReady(true);
+
+        // Apply buffered live Last.fm track smoothly now that scramble has finished
+        if (pendingTrackRef.current) {
+          const p = pendingTrackRef.current;
+          setNowPlaying(p.name);
+          setNowArtist(p.artist);
+          setIsLive(p.isLive);
+          pendingTrackRef.current = null;
+        }
       }
     };
 
@@ -382,9 +408,19 @@ export default function Home() {
           const tracks = d.recenttracks && d.recenttracks.track;
           const track = Array.isArray(tracks) ? tracks[0] : tracks;
           if (!track) return;
-          setNowPlaying(track.name);
-          setNowArtist((track.artist || {})["#text"] || "");
-          setIsLive(Boolean((track["@attr"] || {}).nowplaying));
+          const trackData = {
+            name: track.name,
+            artist: (track.artist || {})["#text"] || "",
+            isLive: Boolean((track["@attr"] || {}).nowplaying),
+          };
+          // Buffer track while text scramble is executing to avoid React re-rendering DOM nodes mid-animation
+          if (!scrambleDoneRef.current) {
+            pendingTrackRef.current = trackData;
+          } else {
+            setNowPlaying(trackData.name);
+            setNowArtist(trackData.artist);
+            setIsLive(trackData.isLive);
+          }
         })
         .catch(() => { });
     };
@@ -719,11 +755,7 @@ export default function Home() {
               color: "#8a8a8a",
             }}
           >
-            {scrambleDone ? (
-              <span>{nowLabel}</span>
-            ) : (
-              <span data-scramble data-final-color="#8a8a8a">{nowLabel}</span>
-            )}
+            <span data-scramble data-final-color="#8a8a8a">{nowLabel}</span>
           </span>
           <span
             style={{
@@ -732,13 +764,10 @@ export default function Home() {
               fontSize: "16px",
               lineHeight: "100%",
               color: "#ffffff",
+              transition: "opacity 250ms ease",
             }}
           >
-            {scrambleDone ? (
-              <span>{nowTrack}</span>
-            ) : (
-              <span data-scramble data-final-color="#ffffff">{nowTrack}</span>
-            )}
+            <span data-scramble data-final-color="#ffffff">{nowTrack}</span>
           </span>
         </div>
       </div>

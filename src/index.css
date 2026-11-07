@@ -92,10 +92,10 @@ html, body {
 
 @keyframes wipe-out-zeros {
   0% {
-    clip-path: polygon(-8% 0%, 100% 0%, 100% 100%, -15% 100%, -7% 65%, -11% 35%);
+    clip-path: polygon(-8% 0%, 150% 0%, 150% 100%, -15% 100%, -7% 65%, -11% 35%);
   }
   100% {
-    clip-path: polygon(126% 0%, 100% 0%, 100% 100%, 119% 100%, 127% 65%, 123% 35%);
+    clip-path: polygon(126% 0%, 150% 0%, 150% 100%, 119% 100%, 127% 65%, 123% 35%);
   }
 }
 
@@ -323,6 +323,7 @@ html, body {
 
 [data-el="proj-inner"].is-wiping-media [data-card] video,
 [data-el="proj-inner"].is-wiping-media [data-card] img {
+  will-change: clip-path;
   animation: wipe-in-media 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
