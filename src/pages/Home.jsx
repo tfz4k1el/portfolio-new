@@ -5,6 +5,20 @@ import BinaryRadarLoader from "../components/BinaryRadarLoader";
 const LASTFM_USER = "Zafkiel69";
 const LASTFM_KEY = "c34fdb3897e465413e4fbf9d94b8da85";
 
+const getInitialTrack = () => {
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem("portfolio_lastfm_track");
+      if (cached) return JSON.parse(cached);
+    } catch {}
+  }
+  return {
+    name: "Kiss Me",
+    artist: "Sixpence None the Richer",
+    isLive: true,
+  };
+};
+
 export default function Home() {
   const navigate = useNavigate();
 
@@ -17,11 +31,12 @@ export default function Home() {
   const blogNoteRef = useRef(null);
   const leftColRef = useRef(null);
 
+  const initialTrackRef = useRef(getInitialTrack());
   const [socialsOpen, setSocialsOpen] = useState(false);
   const [blogOpen, setBlogOpen] = useState(false);
-  const [nowPlaying, setNowPlaying] = useState(null);
-  const [nowArtist, setNowArtist] = useState(null);
-  const [isLive, setIsLive] = useState(false);
+  const [nowPlaying, setNowPlaying] = useState(initialTrackRef.current.name);
+  const [nowArtist, setNowArtist] = useState(initialTrackRef.current.artist);
+  const [isLive, setIsLive] = useState(initialTrackRef.current.isLive);
 
   // Motion designer scramble and radar states
   const [scrambleDone, setScrambleDone] = useState(false);
@@ -304,9 +319,11 @@ export default function Home() {
         // Apply buffered live Last.fm track smoothly now that scramble has finished
         if (pendingTrackRef.current) {
           const p = pendingTrackRef.current;
-          setNowPlaying(p.name);
-          setNowArtist(p.artist);
-          setIsLive(p.isLive);
+          if (p.name !== nowPlaying || p.artist !== nowArtist || p.isLive !== isLive) {
+            setNowPlaying(p.name);
+            setNowArtist(p.artist);
+            setIsLive(p.isLive);
+          }
           pendingTrackRef.current = null;
         }
       }
@@ -413,6 +430,10 @@ export default function Home() {
             artist: (track.artist || {})["#text"] || "",
             isLive: Boolean((track["@attr"] || {}).nowplaying),
           };
+          try {
+            localStorage.setItem("portfolio_lastfm_track", JSON.stringify(trackData));
+          } catch {}
+
           // Buffer track while text scramble is executing to avoid React re-rendering DOM nodes mid-animation
           if (!scrambleDoneRef.current) {
             pendingTrackRef.current = trackData;
@@ -448,7 +469,7 @@ export default function Home() {
   };
 
   const nowLabel = nowPlaying && !isLive ? "LAST PLAYED" : "NOW PLAYING";
-  const nowTrack = nowPlaying ? `${nowPlaying} — ${nowArtist}` : "E85 – Don Tolover";
+  const nowTrack = nowPlaying ? `${nowPlaying} — ${nowArtist}` : "Kiss Me — Sixpence None the Richer";
 
   const handleVideoMetadata = (e) => {
     e.currentTarget.muted = true;
