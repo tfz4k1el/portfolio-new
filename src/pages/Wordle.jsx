@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { AsciiReveal } from "ascii-reveal";
 
 const TILE_COLORS = { g: "#6aaa64", y: "#c9b458", b: "#27272a" };
 const WD_KEY = "wordle_data";
@@ -8,6 +9,7 @@ const WD_API = "https://z4ffy--2b4917f477ec11f1bd2f1607ee4eb77e.web.val.run";
 const DEFAULT_DATA = {
   puzzle: "1,840",
   score: "5/6",
+  streak: 34,
   rows: [
     ["y", "b", "b", "y", "b"],
     ["g", "b", "b", "y", "b"],
@@ -44,7 +46,7 @@ export default function Wordle() {
     window.addEventListener("storage", onStorage);
 
     if (WD_API) {
-      fetch(WD_API)
+      fetch(WD_API, { cache: "no-store" })
         .then((r) => r.json())
         .then((s) => {
           let record = s;
@@ -63,8 +65,13 @@ export default function Wordle() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  const streak = data.streak ?? DEFAULT_DATA.streak;
+
   return (
-    <div
+    <AsciiReveal
+      as="div"
+      preset="terminal"
+      duration="cinematic"
       data-screen-label="Wordle"
       data-el="page"
       style={{
@@ -84,11 +91,9 @@ export default function Wordle() {
           display: "flex",
           alignItems: "center",
           padding: "4px 0",
-          opacity: 0,
-          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
         }}
       >
-        <Link to="/" className="brand-link">
+        <Link to="/" className="brand-link" data-ascii="fade">
           Hafiz Yoosuf
         </Link>
       </div>
@@ -112,8 +117,6 @@ export default function Wordle() {
             lineHeight: "100%",
             letterSpacing: "0.08em",
             color: "#8a8a8a",
-            opacity: 0,
-            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards",
           }}
         >
           WORDLE
@@ -126,14 +129,13 @@ export default function Wordle() {
               fontSize: "20px",
               lineHeight: "100%",
               color: "#ffffff",
-              opacity: 0,
-              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
             }}
           >
             Wordle {data.puzzle} {data.score}
           </span>
 
           <div
+            data-ascii="skip"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(5, 44px)",
@@ -156,8 +158,25 @@ export default function Wordle() {
               ))
             )}
           </div>
+
+          {streak != null && (
+            <span
+              style={{
+                fontFamily: MONO,
+                fontWeight: 500,
+                fontSize: "13px",
+                lineHeight: "100%",
+                letterSpacing: "0.08em",
+                color: "#8a8a8a",
+                textTransform: "uppercase",
+                marginTop: "4px",
+              }}
+            >
+              STREAK · <span style={{ color: "#ffffff", fontWeight: 600 }}>{streak}</span>
+            </span>
+          )}
         </div>
       </div>
-    </div>
+    </AsciiReveal>
   );
 }

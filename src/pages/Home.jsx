@@ -1,8 +1,66 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AsciiReveal, AsciiSkeleton } from "ascii-reveal";
 
 const LASTFM_USER = "Zafkiel69";
 const LASTFM_KEY = "c34fdb3897e465413e4fbf9d94b8da85";
+
+function HomeMediaCard({ isVideo, src, alt, extra, isLoaded, onLoadedMetadata }) {
+  return (
+    <div
+      data-card
+      {...(extra ? { "data-card-extra": "" } : {})}
+      style={{
+        width: "387px",
+        aspectRatio: "16/9",
+        background: "#171717",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <AsciiReveal
+        preset="dither"
+        loading={!isLoaded}
+        duration="cinematic"
+        style={{ width: "100%", height: "100%", position: "relative" }}
+      >
+        {isVideo ? (
+          <video
+            data-main-video
+            src={src}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            disablePictureInPicture
+            disableRemotePlayback
+            onLoadedMetadata={onLoadedMetadata}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              willChange: "transform",
+              transform: "translateZ(0)",
+            }}
+          />
+        ) : (
+          <img
+            src={src}
+            alt={alt}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+        )}
+      </AsciiReveal>
+    </div>
+  );
+}
 
 export default function Home() {
   const navigate = useNavigate();
@@ -205,7 +263,12 @@ export default function Home() {
 
   // Last.fm live track fetch
   useEffect(() => {
-    if (!LASTFM_USER || !LASTFM_KEY) return;
+    const fallbackTimer = setTimeout(() => {
+      setNowPlaying((prev) => prev ?? "E85");
+      setNowArtist((prev) => prev ?? "Don Tolover");
+    }, 2500);
+
+    if (!LASTFM_USER || !LASTFM_KEY) return () => clearTimeout(fallbackTimer);
     const fetchNow = () => {
       fetch(
         `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${LASTFM_USER}&api_key=${LASTFM_KEY}&format=json&limit=1`
@@ -224,7 +287,10 @@ export default function Home() {
 
     fetchNow();
     const interval = setInterval(fetchNow, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(fallbackTimer);
+      clearInterval(interval);
+    };
   }, []);
 
   // Hover handlers for drifting panel
@@ -348,8 +414,12 @@ export default function Home() {
       </div>
 
       {/* LEFT COLUMN */}
-      <div
+      <AsciiReveal
+        as="div"
         data-el="left"
+        preset="decode"
+        duration="cinematic"
+        loading={!isLoaded}
         style={{
           position: "relative",
           display: "flex",
@@ -364,11 +434,9 @@ export default function Home() {
             display: "flex",
             alignItems: "center",
             padding: "4px 0",
-            opacity: 0,
-            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
           }}
         >
-          <Link to="/" className="brand-link">
+          <Link to="/" className="brand-link" data-ascii="fade">
             Hafiz Yoosuf
           </Link>
         </div>
@@ -388,8 +456,6 @@ export default function Home() {
               display: "flex",
               flexDirection: "column",
               gap: "16px",
-              opacity: 0,
-              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards",
             }}
           >
             <span
@@ -506,8 +572,6 @@ export default function Home() {
               display: "flex",
               flexDirection: "column",
               gap: "16px",
-              opacity: 0,
-              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
             }}
           >
             <span
@@ -526,13 +590,13 @@ export default function Home() {
               <div ref={socialsWrapRef} style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <button
                   type="button"
-                  className={`nav-btn ${socialsOpen ? "is-active" : ""}`}
+                  data-ascii="fade" className={`nav-btn ${socialsOpen ? "is-active" : ""}`}
                   onClick={() => setSocialsOpen((v) => !v)}
                 >
                   SOCIALS
                 </button>
                 <div
-                  data-socials-popup
+                  data-socials-popup data-ascii="surface"
                   ref={socialsRef}
                   style={{
                     position: "absolute",
@@ -604,7 +668,7 @@ export default function Home() {
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <button
                   type="button"
-                  className={`nav-btn ${blogOpen ? "is-active" : ""}`}
+                  data-ascii="fade" className={`nav-btn ${blogOpen ? "is-active" : ""}`}
                   onClick={() => setBlogOpen((v) => !v)}
                 >
                   BLOG
@@ -629,13 +693,13 @@ export default function Home() {
                 </span>
               </div>
 
-              <a href="#" className="nav-btn">
+              <a href="#" className="nav-btn" data-ascii="fade">
                 RESUME
               </a>
-              <Link to="/guestbook" className="nav-btn">
+              <Link to="/guestbook" className="nav-btn" data-ascii="fade">
                 GUESTBOOK
               </Link>
-              <Link to="/wordle" className="nav-btn">
+              <Link to="/wordle" className="nav-btn" data-ascii="fade">
                 WORDLE
               </Link>
             </div>
@@ -649,8 +713,6 @@ export default function Home() {
             flexDirection: "column",
             gap: "8px",
             padding: "4px 0",
-            opacity: 0,
-            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 240ms forwards",
           }}
         >
           <span
@@ -665,19 +727,25 @@ export default function Home() {
           >
             {nowLabel}
           </span>
-          <span
-            style={{
-              fontFamily: "'Geist', sans-serif",
-              fontWeight: 600,
-              fontSize: "16px",
-              lineHeight: "100%",
-              color: "#ffffff",
-            }}
-          >
-            {nowTrack}
-          </span>
+          {nowPlaying ? (
+            <span
+              style={{
+                fontFamily: "'Geist', sans-serif",
+                fontWeight: 600,
+                fontSize: "16px",
+                lineHeight: "100%",
+                color: "#ffffff",
+              }}
+            >
+              {nowTrack}
+            </span>
+          ) : (
+            <div style={{ height: "16px", display: "flex", alignItems: "center" }}>
+              <AsciiSkeleton variant="terminal" lines={1} widths={["220px"]} />
+            </div>
+          )}
         </div>
-      </div>
+      </AsciiReveal>
 
       {/* PROJECTS DRIFTING PANEL */}
       <div
@@ -744,50 +812,30 @@ export default function Home() {
                 willChange: "transform",
               }}
             >
-              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <video
-                  data-main-video
-                  src="/assets/projects/motion/Infinity.webm"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  disablePictureInPicture
-                  disableRemotePlayback
-                  onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
-                />
-              </div>
-              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <img
-                  src="/assets/projects/ui/Noveo.webp"
-                  alt="Noveo interface project preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-              </div>
-              <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <video
-                  data-main-video
-                  src="/assets/projects/motion/StockBud.webm"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  disablePictureInPicture
-                  disableRemotePlayback
-                  onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
-                />
-              </div>
-              <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <img
-                  src="/assets/projects/ui/Vire.webp"
-                  alt="Vire interface project preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-              </div>
+              <HomeMediaCard
+                isVideo
+                src="/assets/projects/motion/Infinity.webm"
+                isLoaded={isLoaded}
+                onLoadedMetadata={handleVideoMetadata}
+              />
+              <HomeMediaCard
+                src="/assets/projects/ui/Noveo.webp"
+                alt="Noveo interface project preview"
+                isLoaded={isLoaded}
+              />
+              <HomeMediaCard
+                isVideo
+                extra
+                src="/assets/projects/motion/StockBud.webm"
+                isLoaded={isLoaded}
+                onLoadedMetadata={handleVideoMetadata}
+              />
+              <HomeMediaCard
+                extra
+                src="/assets/projects/ui/Vire.webp"
+                alt="Vire interface project preview"
+                isLoaded={isLoaded}
+              />
             </div>
           </div>
 
@@ -815,50 +863,30 @@ export default function Home() {
                 willChange: "transform",
               }}
             >
-              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <video
-                  data-main-video
-                  src="/assets/projects/motion/T2Chat.webm"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  disablePictureInPicture
-                  disableRemotePlayback
-                  onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
-                />
-              </div>
-              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <img
-                  src="/assets/projects/ui/asmitha.webp"
-                  alt="Asmitha interface project preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-              </div>
-              <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <video
-                  data-main-video
-                  src="/assets/projects/motion/Vireclub.webm"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  disablePictureInPicture
-                  disableRemotePlayback
-                  onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
-                />
-              </div>
-              <div data-card data-card-extra style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <img
-                  src="/assets/projects/ui/nxhuman.webp"
-                  alt="NxHuman interface project preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-              </div>
+              <HomeMediaCard
+                isVideo
+                src="/assets/projects/motion/T2Chat.webm"
+                isLoaded={isLoaded}
+                onLoadedMetadata={handleVideoMetadata}
+              />
+              <HomeMediaCard
+                src="/assets/projects/ui/asmitha.webp"
+                alt="Asmitha interface project preview"
+                isLoaded={isLoaded}
+              />
+              <HomeMediaCard
+                isVideo
+                extra
+                src="/assets/projects/motion/Vireclub.webm"
+                isLoaded={isLoaded}
+                onLoadedMetadata={handleVideoMetadata}
+              />
+              <HomeMediaCard
+                extra
+                src="/assets/projects/ui/nxhuman.webp"
+                alt="NxHuman interface project preview"
+                isLoaded={isLoaded}
+              />
             </div>
           </div>
 
@@ -886,28 +914,17 @@ export default function Home() {
                 willChange: "transform",
               }}
             >
-              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <video
-                  data-main-video
-                  src="/assets/projects/motion/Extraordinary.webm"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  disablePictureInPicture
-                  disableRemotePlayback
-                  onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
-                />
-              </div>
-              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <img
-                  src="/assets/projects/ui/Noveo.webp"
-                  alt="Noveo interface project preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-              </div>
+              <HomeMediaCard
+                isVideo
+                src="/assets/projects/motion/Extraordinary.webm"
+                isLoaded={isLoaded}
+                onLoadedMetadata={handleVideoMetadata}
+              />
+              <HomeMediaCard
+                src="/assets/projects/ui/Noveo.webp"
+                alt="Noveo interface project preview"
+                isLoaded={isLoaded}
+              />
             </div>
           </div>
 
@@ -935,28 +952,17 @@ export default function Home() {
                 willChange: "transform",
               }}
             >
-              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <video
-                  data-main-video
-                  src="/assets/projects/motion/Muster AI.webm"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  disablePictureInPicture
-                  disableRemotePlayback
-                  onLoadedMetadata={handleVideoMetadata}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", willChange: "transform", transform: "translateZ(0)" }}
-                />
-              </div>
-              <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
-                <img
-                  src="/assets/projects/ui/Vire.webp"
-                  alt="Vire interface project preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-              </div>
+              <HomeMediaCard
+                isVideo
+                src="/assets/projects/motion/Muster AI.webm"
+                isLoaded={isLoaded}
+                onLoadedMetadata={handleVideoMetadata}
+              />
+              <HomeMediaCard
+                src="/assets/projects/ui/Vire.webp"
+                alt="Vire interface project preview"
+                isLoaded={isLoaded}
+              />
             </div>
           </div>
         </div>

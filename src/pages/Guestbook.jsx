@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { AsciiReveal } from "ascii-reveal";
 
 const GB_KEY = "guestbook_v1";
 
@@ -50,7 +51,10 @@ export default function Guestbook() {
   };
 
   return (
-    <div
+    <AsciiReveal
+      as="div"
+      preset="decode"
+      duration="cinematic"
       data-screen-label="Guestbook"
       data-el="page"
       style={{
@@ -70,11 +74,9 @@ export default function Guestbook() {
           display: "flex",
           alignItems: "center",
           padding: "4px 0",
-          opacity: 0,
-          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
         }}
       >
-        <Link to="/" className="brand-link">
+        <Link to="/" className="brand-link" data-ascii="fade">
           Hafiz Yoosuf
         </Link>
       </div>
@@ -82,8 +84,6 @@ export default function Guestbook() {
       <div
         style={{
           padding: "28px 0 16px",
-          opacity: 0,
-          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards",
         }}
       >
         <span
@@ -107,12 +107,11 @@ export default function Guestbook() {
             display: "flex",
             flexDirection: "column",
             gap: "12px",
-            opacity: 0,
-            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
           }}
         >
           <input
             className="input-field"
+            data-ascii="surface"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Name"
@@ -120,13 +119,14 @@ export default function Guestbook() {
           />
           <textarea
             className="input-field"
+            data-ascii="surface"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Leave a note"
             rows={3}
             style={{ resize: "vertical" }}
           />
-          <button type="submit" className="btn-primary" style={{ alignSelf: "flex-start", marginTop: "4px" }}>
+          <button type="submit" data-ascii="fade" className="btn-primary" style={{ alignSelf: "flex-start", marginTop: "4px" }}>
             SIGN GUESTBOOK
           </button>
         </form>
@@ -136,8 +136,6 @@ export default function Guestbook() {
             display: "flex",
             flexDirection: "column",
             gap: "28px",
-            opacity: 0,
-            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 240ms forwards",
           }}
         >
           {entries.map((entry, index) => (
@@ -147,7 +145,6 @@ export default function Guestbook() {
                 display: "flex",
                 flexDirection: "column",
                 gap: "6px",
-                animation: "pf-in 500ms cubic-bezier(0.16,1,0.3,1)",
               }}
             >
               <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
@@ -191,6 +188,6 @@ export default function Guestbook() {
           ))}
         </div>
       </div>
-    </div>
+    </AsciiReveal>
   );
 }

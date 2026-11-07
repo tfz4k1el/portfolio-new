@@ -1,4 +1,10 @@
 :root {
+  --ascii-accent: #f34951;
+  --ascii-flash: #f34951;
+  --ascii-glyph: rgba(255, 255, 255, 0.45);
+  --ascii-skeleton: rgba(255, 255, 255, 0.25);
+  --ascii-font: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --ascii-surface: #080406;
   --accent: #f34951;
   --accent-hover: #ff5c64;
   --accent-glow: rgba(243, 73, 81, 0.45);

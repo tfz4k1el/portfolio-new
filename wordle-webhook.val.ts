@@ -9,7 +9,7 @@
 // 3. Point your daily iOS Shortcut / script POST at the same URL.
 //
 // Expected JSON body:
-// { "puzzle": "1,840", "score": "5/6",
+// { "puzzle": "1,840", "score": "5/6", "streak": 34,
 //   "rows": [["y","b","b","y","b"], ["g","b","b","y","b"], ...] }
 // g = green, y = yellow, b = absent
 

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { AsciiReveal } from "ascii-reveal";
 import { PROJECTS, PROJECT_COLUMNS } from "../data/projects";
 
 const SANS = "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
@@ -47,7 +48,11 @@ function ProjectCard({ project }) {
   }, [isVideo]);
 
   return (
-    <article className="pf-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+    <article
+      className="pf-card"
+      data-ascii="surface"
+      style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+    >
       <div
         className="pf-media"
         style={{
@@ -55,20 +60,23 @@ function ProjectCard({ project }) {
           background: "#171717",
           overflow: "hidden",
           borderRadius: "3px",
+          position: "relative",
         }}
       >
         {isVideo ? (
           <video
             ref={videoRef}
             src={project.src}
+            autoPlay
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="auto"
             disablePictureInPicture
             disableRemotePlayback
             onLoadedMetadata={(e) => {
               e.currentTarget.muted = true;
+              e.currentTarget.play().catch(() => { });
             }}
             style={{ width: "100%", height: "auto", display: "block", willChange: "transform", transform: "translateZ(0)" }}
           />
@@ -76,7 +84,6 @@ function ProjectCard({ project }) {
           <img
             src={project.src}
             alt={`${project.title} project preview`}
-            loading="lazy"
             decoding="async"
             style={{ width: "100%", height: "auto", display: "block" }}
           />
@@ -97,6 +104,7 @@ function ProjectCard({ project }) {
           {project.title}
         </h2>
         <span
+          data-ascii="fade"
           style={{
             fontFamily: MONO,
             fontWeight: 500,
@@ -129,7 +137,10 @@ export default function Projects() {
   const countStr = PROJECTS.length.toString().padStart(2, "0");
 
   return (
-    <main
+    <AsciiReveal
+      as="main"
+      preset="dither"
+      duration="cinematic"
       data-portfolio
       style={{
         position: "relative",
@@ -149,11 +160,9 @@ export default function Projects() {
           display: "flex",
           alignItems: "center",
           padding: "4px 0",
-          opacity: 0,
-          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
         }}
       >
-        <Link to="/" className="brand-link">
+        <Link to="/" className="brand-link" data-ascii="fade">
           Hafiz Yoosuf
         </Link>
       </header>
@@ -161,8 +170,6 @@ export default function Projects() {
       <div
         style={{
           padding: "28px 0 16px",
-          opacity: 0,
-          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards",
         }}
       >
         <span
@@ -180,20 +187,18 @@ export default function Projects() {
       </div>
 
       <section className="pf-grid" aria-label="Selected projects">
-        {PROJECT_COLUMNS.flat().map((p, i) => (
+        {PROJECT_COLUMNS.flat().map((p) => (
           <div
             key={p.id}
             style={{
               breakInside: "avoid",
               marginBottom: "42px",
-              opacity: 0,
-              animation: `pf-in 700ms cubic-bezier(0.16,1,0.3,1) ${140 + i * 45}ms forwards`,
             }}
           >
             <ProjectCard project={p} />
           </div>
         ))}
       </section>
-    </main>
+    </AsciiReveal>
   );
 }
