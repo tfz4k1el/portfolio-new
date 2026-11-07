@@ -80,13 +80,13 @@ html, body {
   }
 }
 
-/* 4th Loop Transition Wipes: Zeroes wiped out ahead of beam, Media wiped in trailing beam */
+/* 4th Loop Transition Wipes: Zeroes wiped out ahead of beam, Media wiped in lockstep with leading edge */
 @keyframes wipe-in-media {
   0% {
-    clip-path: polygon(0% 0%, -24% 0%, -27% 35%, -23% 65%, -31% 100%, 0% 100%);
+    clip-path: polygon(0% 0%, -8% 0%, -11% 35%, -7% 65%, -15% 100%, 0% 100%);
   }
   100% {
-    clip-path: polygon(0% 0%, 110% 0%, 107% 35%, 111% 65%, 103% 100%, 0% 100%);
+    clip-path: polygon(0% 0%, 126% 0%, 123% 35%, 127% 65%, 119% 100%, 0% 100%);
   }
 }
 

@@ -809,7 +809,7 @@ export default function Home() {
                 {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <video
                   data-main-video
-                  src="/assets/projects/motion/Infinity.webm"
+                  src="/assets/projects/motion/StockBud.webm"
                   autoPlay
                   muted
                   loop
@@ -833,7 +833,7 @@ export default function Home() {
                 {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <video
                   data-main-video
-                  src="/assets/projects/motion/StockBud.webm"
+                  src="/assets/projects/motion/Extraordinary.webm"
                   autoPlay
                   muted
                   loop
@@ -974,8 +974,8 @@ export default function Home() {
               <div data-card style={{ width: "387px", aspectRatio: "16/9", background: "#171717" }}>
                 {showRadarLoader && <BinaryRadarLoader isWiping={isWiping} />}
                 <img
-                  src="/assets/projects/ui/Noveo.webp"
-                  alt="Noveo interface project preview"
+                  src="/assets/projects/ui/nxhuman.webp"
+                  alt="NxHuman interface project preview"
                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />
               </div>
