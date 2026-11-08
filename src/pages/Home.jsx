@@ -118,12 +118,16 @@ export default function Home({ onShowBg }) {
     const p = paramsRef.current[i];
     if (!p) return 0;
     const m = maxShiftRef.current[i] ?? Infinity;
-    const amp = Math.min(p.amplitude, isFinite(m) ? m : p.amplitude);
+    const amp = Math.min(p.amplitude, isFinite(m) && m > 0 ? m : p.amplitude);
     return amp * Math.sin((clockRef.current / p.period) * Math.PI * 2 + p.phase);
   }, []);
 
   const startLoop = useCallback(() => {
     lastTsRef.current = null;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     const step = (ts) => {
       if (hoveringRef.current) {
         rafRef.current = null;
@@ -210,10 +214,10 @@ export default function Home({ onShowBg }) {
       if (cancelled) return;
 
       setLoadingPercent(100);
-      // Ensure React commits nowPlaying & DOM nodes before mounting swarm rebuild loader
+      // Ensure React commits nowPlaying & DOM nodes, then mount swarm rebuild loader
+      // Preloader remains visible until SwarmRebuildLoader signals onReady (zero-flash hand-off)
       setTimeout(() => {
         if (!cancelled) {
-          setIsLoaded(true);
           setSwarmActive(true);
         }
       }, 50);
@@ -340,7 +344,7 @@ export default function Home({ onShowBg }) {
       const raf1 = requestAnimationFrame(() => {
         const raf2 = requestAnimationFrame(() => {
           timerId = setTimeout(() => {
-            if (!isRealHoverRef.current && panelRef.current && window.innerWidth > 900) {
+            if (panelRef.current && window.innerWidth > 900) {
               isCollapsingRef.current = true;
               panelRef.current.style.willChange = "width, max-width";
               panelRef.current.style.transition = "width 900ms cubic-bezier(0.16, 1, 0.3, 1), max-width 900ms cubic-bezier(0.16, 1, 0.3, 1)";
@@ -352,12 +356,11 @@ export default function Home({ onShowBg }) {
               if (el) el.style.transition = "none";
             });
 
-            // Start drift loop right after collapse is initiated (not after collapse completed)
-            if (!isRealHoverRef.current) {
-              hoveringRef.current = false;
-              measure();
-              startLoop();
-            }
+            // Start drift loop immediately when collapse begins
+            isRealHoverRef.current = false;
+            hoveringRef.current = false;
+            measure();
+            startLoop();
 
             // Resume all background videos smoothly once swarm rebuild overlay is completely unmounted
             if (containerRef.current) {
@@ -375,6 +378,7 @@ export default function Home({ onShowBg }) {
               if (panelRef.current) {
                 panelRef.current.style.willChange = "auto";
               }
+              measure();
               // After collapse is done: fade in background gradient
               onShowBg?.();
               window.dispatchEvent(new CustomEvent("show-harness-bg"));
@@ -415,6 +419,7 @@ export default function Home({ onShowBg }) {
 
   // Hover handlers for drifting panel
   const handleEnter = (e) => {
+    if (isCollapsingRef.current || !hasInitialRebuildFinished) return;
     isRealHoverRef.current = true;
     hoveringRef.current = true;
     if (rafRef.current) {
@@ -1096,6 +1101,7 @@ export default function Home({ onShowBg }) {
       {swarmActive && (
         <SwarmRebuildLoader
           targetSelector='[data-el="page"]'
+          onReady={() => setIsLoaded(true)}
           onComplete={handleSwarmComplete}
         />
       )}

@@ -337,7 +337,7 @@ html, body {
     padding: 18px 0 0 0 !important;
   }
   [data-card] {
-    width: 30vw !important;
+    width: 24vw !important;
   }
   [data-card-extra] {
     display: block;
@@ -370,9 +370,9 @@ html, body {
     padding: 16px 0 0 0 !important;
   }
   [data-card] {
-    width: 64vw !important;
-    max-width: 280px;
-    min-width: 180px;
+    width: 51vw !important;
+    max-width: 224px;
+    min-width: 144px;
   }
   [data-card-extra] {
     display: block;

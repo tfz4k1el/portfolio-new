@@ -3206,6 +3206,7 @@ class Sound {
 export default function SwarmRebuildLoader({
   targetSelector = '[data-el="page"]',
   onComplete,
+  onReady,
 }) {
   const containerRef = useRef(null);
 
@@ -3285,6 +3286,9 @@ export default function SwarmRebuildLoader({
       // Fade in background (HUD removed)
       view.bg.classList.add("on");
       if (view && view.hud) view.hud.classList.add("on");
+
+      // Signal ready so preloader hides seamlessly without flashing underlying page
+      if (onReady) onReady();
 
       let last = performance.now();
       let completedHandled = false;
@@ -3386,7 +3390,7 @@ export default function SwarmRebuildLoader({
       for (const u of unbinds) u();
       if (sfx) sfx.close(0.1);
     };
-  }, [targetSelector, onComplete]);
+  }, [targetSelector, onComplete, onReady]);
 
   return (
     <div
@@ -3399,6 +3403,7 @@ export default function SwarmRebuildLoader({
         pointerEvents: "none",
         overflow: "hidden",
         opacity: 1,
+        background: "#080406",
       }}
     />
   );
