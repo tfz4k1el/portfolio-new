@@ -22,7 +22,6 @@ function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
         <video
           data-main-video
           src={src}
-          autoPlay
           muted
           loop
           playsInline
@@ -147,55 +146,27 @@ export default function Home({ onShowBg }) {
       "/assets/projects/ui/nxhuman.webp",
     ];
 
-    const totalUnits = imageUrls.length + 2; // images + fonts + Last.fm
-    let completedUnits = 0;
-
-    const tick = () => {
-      if (cancelled) return;
-      completedUnits++;
-      const pct = Math.min(100, Math.round((completedUnits / totalUnits) * 100));
-      setLoadingPercent(pct);
-      if (completedUnits >= totalUnits) {
-        setLoadingPercent(100);
-        window.setTimeout(() => {
-          if (!cancelled) {
-            setIsLoaded(true);
-            setSwarmActive(true);
-          }
-        }, 200);
-      }
-    };
-
-    // 1. Preload UI images
-    imageUrls.forEach((src) => {
-      const img = new Image();
-      img.onload = tick;
-      img.onerror = tick;
-      img.src = src;
-      if (img.complete) tick();
-    });
-
-    // 2. Await fonts
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(tick).catch(tick);
-    } else {
-      tick();
-    }
+    const preloadImg = (src) =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.onload = resolve;
+        img.onerror = resolve;
+        img.src = src;
+        if (img.complete) resolve();
+      });
 
     // 3. Fetch real Last.fm track during staging
     const fetchLastFm = async () => {
-      if (!LASTFM_USER || !LASTFM_KEY) {
-        tick();
-        return;
-      }
+      if (!LASTFM_USER || !LASTFM_KEY) return;
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 1200);
+        const timeout = setTimeout(() => controller.abort(), 1400);
         const res = await fetch(
           `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${LASTFM_USER}&api_key=${LASTFM_KEY}&format=json&limit=1`,
           { signal: controller.signal }
         );
         clearTimeout(timeout);
+        if (!res.ok) return;
         const d = await res.json();
         const tracks = d.recenttracks && d.recenttracks.track;
         const track = Array.isArray(tracks) ? tracks[0] : tracks;
@@ -207,10 +178,32 @@ export default function Home({ onShowBg }) {
       } catch (_) {
         // failed silently, no hardcoding
       }
-      tick();
     };
 
-    fetchLastFm();
+    const runStaging = async () => {
+      setLoadingPercent(30);
+      const fontPromise = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+      const imagePromises = Promise.all(imageUrls.map(preloadImg));
+      const lastFmPromise = fetchLastFm();
+
+      Promise.all([imagePromises, fontPromise]).then(() => {
+        if (!cancelled) setLoadingPercent(75);
+      });
+
+      await Promise.allSettled([imagePromises, fontPromise, lastFmPromise]);
+      if (cancelled) return;
+
+      setLoadingPercent(100);
+      // Ensure React commits nowPlaying & DOM nodes before mounting swarm rebuild loader
+      setTimeout(() => {
+        if (!cancelled) {
+          setIsLoaded(true);
+          setSwarmActive(true);
+        }
+      }, 50);
+    };
+
+    runStaging();
 
     const safetyTimer = window.setTimeout(() => {
       if (!cancelled) {
@@ -218,7 +211,7 @@ export default function Home({ onShowBg }) {
         setIsLoaded(true);
         setSwarmActive(true);
       }
-    }, 1800);
+    }, 2000);
 
     return () => {
       cancelled = true;
@@ -233,14 +226,20 @@ export default function Home({ onShowBg }) {
     if (!container || !("IntersectionObserver" in window)) return;
 
     const vids = Array.from(container.querySelectorAll("video"));
+    vids.forEach((v) => {
+      v.muted = true;
+      if (!isLoaded || swarmActive) {
+        v.pause();
+      }
+    });
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const vid = entry.target;
-          if (entry.isIntersecting && !document.hidden) {
+          if (entry.isIntersecting && !document.hidden && !swarmActive && isLoaded) {
             vid.play().catch(() => { });
-          } else {
+          } else if (!entry.isIntersecting) {
             vid.pause();
           }
         });
@@ -253,7 +252,7 @@ export default function Home({ onShowBg }) {
     const onVisibility = () => {
       if (document.hidden) {
         vids.forEach((v) => v.pause());
-      } else {
+      } else if (!swarmActive && isLoaded) {
         vids.forEach((v) => {
           const rect = v.getBoundingClientRect();
           if (rect.right > 0 && rect.left < window.innerWidth && rect.bottom > 0 && rect.top < window.innerHeight) {
@@ -269,7 +268,7 @@ export default function Home({ onShowBg }) {
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, []);
+  }, [swarmActive, isLoaded]);
 
   // Initialize observers and event listeners (drift loop held paused during expanded staging)
   useEffect(() => {
@@ -308,6 +307,15 @@ export default function Home({ onShowBg }) {
   // c) Start the ambient sine-wave drift loop once the collapse completes
   const handleSwarmComplete = useCallback(() => {
     setSwarmActive(false);
+
+    // Resume all background videos smoothly once swarm rebuild is done
+    if (containerRef.current) {
+      const vids = containerRef.current.querySelectorAll("video");
+      vids.forEach((v) => {
+        v.muted = true;
+        v.play().catch(() => {});
+      });
+    }
 
     if (!isRealHoverRef.current && panelRef.current && window.innerWidth > 900) {
       panelRef.current.style.transition = "width 900ms cubic-bezier(0.16, 1, 0.3, 1), max-width 900ms cubic-bezier(0.16, 1, 0.3, 1)";
@@ -425,7 +433,7 @@ export default function Home({ onShowBg }) {
 
   const handleVideoMetadata = (e) => {
     e.currentTarget.muted = true;
-    e.currentTarget.play().catch(() => { });
+    e.currentTarget.pause();
   };
 
   return (

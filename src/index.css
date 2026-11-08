@@ -75,13 +75,10 @@ html, body {
   place-items: center;
   padding: 24px;
   background: #080406;
-  transition: opacity 420ms ease, visibility 420ms ease;
 }
 
 [data-main-loader].is-hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  display: none !important;
 }
 
 [data-main-loader-inner] {

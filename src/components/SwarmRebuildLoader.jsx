@@ -897,6 +897,7 @@ function captureModel(env, rootEl) {
     const b = conv(r, ctx.layer);
     add({
       kind: "image",
+      origEl: src.localName === "video" ? src : null,
       ...b,
       blend: cs.mixBlendMode !== "normal" ? cs.mixBlendMode : ctx.blend || "",
       media: m.el,
@@ -1464,15 +1465,6 @@ const STYLE = `
 .ruler-corner{position:absolute;top:0;left:0;width:20px;height:20px;background:#2c2c2c}
 .rtext{font:500 9px Inter,system-ui,-apple-system,sans-serif;fill:#8c8c8c}
 .rsel{fill:#0d99ff}
-.hud{position:absolute;left:50%;bottom:20px;transform:translate(-50%,18px);opacity:0;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 10px;background:rgba(30,30,30,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.07);font:500 12px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;pointer-events:none;transition:opacity .45s ease,transform .45s cubic-bezier(.2,.8,.2,1);white-space:nowrap;user-select:none;z-index:5}
-.hud.on{opacity:1;transform:translate(-50%,0)}
-.hud .dots{display:flex;padding-left:5px}
-.hud .dots i{display:block;width:18px;height:18px;margin-left:-5px;border-radius:50%;border:2px solid #1e1e1e;font:700 9px/14px Inter,system-ui,sans-serif;font-style:normal;text-align:center;color:#fff;transition:background .3s}
-.hud .txt,.hud .status{display:flex;align-items:center;gap:7px;color:#cfcfcf;font-variant-numeric:tabular-nums}
-.hud .txt b{color:#fff;font-weight:600}
-.hud .sep{width:1px;height:12px;background:#444}
-.hud .bar{width:64px;height:3px;border-radius:2px;background:#3a3a3a;overflow:hidden}
-.hud .bar i{display:block;height:100%;width:0;background:#0D99FF;transition:width .35s ease}
 `;
 
 // -------------------------------------------------------------------- env
@@ -1520,12 +1512,7 @@ class View {
 <svg class="ov"></svg>
 <div class="badges"></div>
 <div class="cursors"></div>
-<div class="rulers"></div>
-<div class="hud">
-  <div class="dots"></div>
-  <div class="txt"><span class="status">Rebuilding…</span></div>
-  <div class="bar"><i></i></div>
-</div>`;
+<div class="rulers"></div>`;
     const $ = (s) => root.querySelector(s);
     this.bg = $(".bg");
     this.under = $(".under");
@@ -1536,10 +1523,10 @@ class View {
     this.badges = $(".badges");
     this.cursorsEl = $(".cursors");
     this.rulers = $(".rulers");
-    this.hud = $(".hud");
-    this.status = $(".status");
-    this.barFill = $(".bar i");
-    this.dots = $(".dots");
+    this.hud = null;
+    this.status = null;
+    this.barFill = null;
+    this.dots = null;
     this.cursorEls = new Map();
     this._ovS = "";
     this._ovB = "";
@@ -1698,7 +1685,13 @@ class View {
           m.muted = true;
           const t = parseFloat(m.getAttribute("data-t"));
           if (t > 0) m.addEventListener("loadedmetadata", () => (m.currentTime = t), { once: true });
-          if (m.hasAttribute("data-play")) m.play().catch(() => {});
+          if (m.hasAttribute("data-play")) {
+            m.play().catch(() => {});
+            if (src.origEl && src.origEl.play) {
+              src.origEl.muted = true;
+              src.origEl.play().catch(() => {});
+            }
+          }
         }
         n._src = src;
         if (src.frame) {
@@ -2525,6 +2518,11 @@ class Engine {
     it.styled = true;
     bump(it);
     this.sfxPlace(isImg ? "image" : "rect", it);
+    if (it.origEl && it.origEl.play) {
+      it.origEl.muted = true;
+      it.origEl.currentTime = 0;
+      it.origEl.play().catch(() => {});
+    }
     yield* this.wait(isImg ? 0.5 : 0.35);
     c.ov = null;
     it.done = true;
@@ -2785,6 +2783,11 @@ class Engine {
       it.settle = true;
       if (!it.editTask) it.mode = "own";
       if (it.kind === "text" && it.mode === "own") it.shown = it.total;
+      if (it.origEl && it.origEl.play) {
+        it.origEl.muted = true;
+        it.origEl.currentTime = 0;
+        it.origEl.play().catch(() => {});
+      }
       bump(it);
     }
     yield* this.wait(0.1);
@@ -3265,9 +3268,9 @@ export default function SwarmRebuildLoader({
       view.mount(model);
       engine.setModel(model);
 
-      // Fade in background and HUD
+      // Fade in background (HUD removed)
       view.bg.classList.add("on");
-      view.hud.classList.add("on");
+      if (view && view.hud) view.hud.classList.add("on");
 
       let last = performance.now();
       let completedHandled = false;
@@ -3278,6 +3281,20 @@ export default function SwarmRebuildLoader({
 
         if (sfx) sfx.finale();
         if (view && view.hud) view.hud.classList.remove("on");
+
+        // Synchronize background video currentTime with overlay clones so exit is seamless with zero skip
+        if (model && model.items) {
+          for (const it of model.items) {
+            if (it.origEl && it.origEl.play && it.node) {
+              const ovVid = it.node.querySelector("video");
+              if (ovVid && !isNaN(ovVid.currentTime) && ovVid.currentTime > 0) {
+                it.origEl.currentTime = ovVid.currentTime;
+              }
+              it.origEl.muted = true;
+              it.origEl.play().catch(() => {});
+            }
+          }
+        }
 
         // Circle around pointer for 500ms using reference flocking logic
         const circleTimer = setTimeout(() => {
