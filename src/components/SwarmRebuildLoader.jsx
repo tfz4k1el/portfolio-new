@@ -3306,9 +3306,17 @@ export default function SwarmRebuildLoader({
             host.style.opacity = "0";
           }
 
-          // After fade out completes, trigger completion hand-off
+          // After fade out completes, stop rendering and trigger completion hand-off
           const fadeTimer = setTimeout(() => {
-            if (!dead && onComplete) {
+            if (dead) return;
+            if (raf) {
+              cancelAnimationFrame(raf);
+              raf = null;
+            }
+            if (host) {
+              host.style.display = "none";
+            }
+            if (onComplete) {
               onComplete();
             }
           }, 460);

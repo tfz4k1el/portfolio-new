@@ -83,6 +83,8 @@ export default function Home({ onShowBg }) {
   const isRealHoverRef = useRef(false); // Tracks actual mouse hover
   const rafRef = useRef(null);
   const maxShiftRef = useRef([0, 0, 0, 0]);
+  const isCollapsingRef = useRef(false);
+  const hasCollapsedRef = useRef(false);
 
   // Seeded drift parameters - calibrated for smooth, gentle, subtle drift
   const paramsRef = useRef([
@@ -278,7 +280,11 @@ export default function Home({ onShowBg }) {
 
     let ro;
     if (window.ResizeObserver && containerRef.current) {
-      ro = new ResizeObserver(() => measure());
+      ro = new ResizeObserver(() => {
+        if (!isCollapsingRef.current) {
+          measure();
+        }
+      });
       ro.observe(containerRef.current);
       const s0 = containerRef.current.querySelector('[data-strip="0"]');
       if (s0) ro.observe(s0);
@@ -302,41 +308,70 @@ export default function Home({ onShowBg }) {
   }, [measure, socialsOpen]);
 
   // Hand-off triggered when the swarm rebuild completes:
-  // a) Unmount swarm overlay (setSwarmActive(false))
-  // b) Trigger smooth collapse of the drift panel from 784px down to 486px (900ms cubic-bezier(0.16, 1, 0.3, 1))
-  // c) Start the ambient sine-wave drift loop once the collapse completes
+  // Step 1: Unmount swarm overlay cleanly
   const handleSwarmComplete = useCallback(() => {
     setSwarmActive(false);
+  }, []);
 
-    // Resume all background videos smoothly once swarm rebuild is done
-    if (containerRef.current) {
-      const vids = containerRef.current.querySelectorAll("video");
-      vids.forEach((v) => {
-        v.muted = true;
-        v.play().catch(() => {});
+  // Step 2: Trigger smooth collapse of the drift panel ONLY AFTER the swarm overlay has fully unmounted
+  useEffect(() => {
+    if (!swarmActive && isLoaded && !hasCollapsedRef.current) {
+      hasCollapsedRef.current = true;
+
+      // Double requestAnimationFrame + 80ms buffer ensures:
+      // a) React has completely unmounted SwarmRebuildLoader
+      // b) Browser has painted clean frames with zero overlay overhead
+      // c) AudioContext closing and garbage collection are completely idle
+      let timerId;
+      const raf1 = requestAnimationFrame(() => {
+        const raf2 = requestAnimationFrame(() => {
+          timerId = setTimeout(() => {
+            if (!isRealHoverRef.current && panelRef.current && window.innerWidth > 900) {
+              isCollapsingRef.current = true;
+              panelRef.current.style.willChange = "width, max-width";
+              panelRef.current.style.transition = "width 900ms cubic-bezier(0.16, 1, 0.3, 1), max-width 900ms cubic-bezier(0.16, 1, 0.3, 1)";
+              panelRef.current.style.width = "486px";
+              panelRef.current.style.maxWidth = "48vw";
+            }
+
+            strips().forEach((el) => {
+              if (el) el.style.transition = "none";
+            });
+
+            // Resume all background videos smoothly once swarm rebuild overlay is completely unmounted
+            if (containerRef.current) {
+              const vids = containerRef.current.querySelectorAll("video");
+              vids.forEach((v) => {
+                v.muted = true;
+                v.play().catch(() => {});
+              });
+            }
+
+            // Once the collapse transition finishes (950ms):
+            setTimeout(() => {
+              isCollapsingRef.current = false;
+              if (panelRef.current) {
+                panelRef.current.style.willChange = "auto";
+              }
+              if (!isRealHoverRef.current) {
+                hoveringRef.current = false;
+                measure();
+                startLoop();
+              }
+              // After collapse is done: fade in background gradient
+              onShowBg?.();
+              window.dispatchEvent(new CustomEvent("show-harness-bg"));
+            }, 950);
+          }, 80);
+        });
       });
-    }
 
-    if (!isRealHoverRef.current && panelRef.current && window.innerWidth > 900) {
-      panelRef.current.style.transition = "width 900ms cubic-bezier(0.16, 1, 0.3, 1), max-width 900ms cubic-bezier(0.16, 1, 0.3, 1)";
-      panelRef.current.style.width = "486px";
-      panelRef.current.style.maxWidth = "48vw";
+      return () => {
+        cancelAnimationFrame(raf1);
+        if (timerId) clearTimeout(timerId);
+      };
     }
-    strips().forEach((el) => {
-      if (el) el.style.transition = "none";
-    });
-
-    setTimeout(() => {
-      if (!isRealHoverRef.current) {
-        hoveringRef.current = false;
-        measure();
-        startLoop();
-      }
-      // After collapse is done: fade in background gradient
-      onShowBg?.();
-      window.dispatchEvent(new CustomEvent("show-harness-bg"));
-    }, 950);
-  }, [measure, startLoop, strips, onShowBg]);
+  }, [swarmActive, isLoaded, measure, startLoop, strips, onShowBg]);
 
   // Periodic Last.fm live track fetch
   useEffect(() => {
