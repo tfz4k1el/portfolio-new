@@ -42,6 +42,7 @@ function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
         <img
           src={src}
           alt={alt}
+          decoding="async"
           style={{
             width: "100%",
             height: "100%",
