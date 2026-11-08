@@ -54,6 +54,10 @@ function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
   );
 }
 
+// Module-level persistent flag across client-side router navigation
+// Resets automatically on full page refresh or fresh visit
+let hasInitialRebuildFinished = false;
+
 export default function Home({ onShowBg }) {
   const navigate = useNavigate();
 
@@ -72,19 +76,19 @@ export default function Home({ onShowBg }) {
   const [isLive, setIsLive] = useState(false);
 
   // Preloader state
-  const [loadingPercent, setLoadingPercent] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadingPercent, setLoadingPercent] = useState(hasInitialRebuildFinished ? 100 : 0);
+  const [isLoaded, setIsLoaded] = useState(hasInitialRebuildFinished);
   const [swarmActive, setSwarmActive] = useState(false);
 
   // Drift loop animation references
   const clockRef = useRef(0);
   const lastTsRef = useRef(null);
-  const hoveringRef = useRef(true); // Locked in expanded state initially
+  const hoveringRef = useRef(!hasInitialRebuildFinished); // Locked in expanded state only on first visit/refresh
   const isRealHoverRef = useRef(false); // Tracks actual mouse hover
   const rafRef = useRef(null);
   const maxShiftRef = useRef([0, 0, 0, 0]);
   const isCollapsingRef = useRef(false);
-  const hasCollapsedRef = useRef(false);
+  const hasCollapsedRef = useRef(hasInitialRebuildFinished);
 
   // Seeded drift parameters - calibrated for smooth, gentle, subtle drift
   const paramsRef = useRef([
@@ -140,6 +144,16 @@ export default function Home({ onShowBg }) {
 
   // Staging Pipeline: Preload assets, wait for fonts, fetch real Last.fm track
   useEffect(() => {
+    if (hasInitialRebuildFinished) {
+      // Re-visiting from /projects, /wordle, etc.
+      // Skip staging pipeline and swarm rebuild, directly show background and start drift loop
+      onShowBg?.();
+      window.dispatchEvent(new CustomEvent("show-harness-bg"));
+      measure();
+      startLoop();
+      return;
+    }
+
     let cancelled = false;
     const imageUrls = [
       "/assets/projects/ui/Noveo.webp",
@@ -338,6 +352,13 @@ export default function Home({ onShowBg }) {
               if (el) el.style.transition = "none";
             });
 
+            // Start drift loop right after collapse is initiated (not after collapse completed)
+            if (!isRealHoverRef.current) {
+              hoveringRef.current = false;
+              measure();
+              startLoop();
+            }
+
             // Resume all background videos smoothly once swarm rebuild overlay is completely unmounted
             if (containerRef.current) {
               const vids = containerRef.current.querySelectorAll("video");
@@ -350,13 +371,9 @@ export default function Home({ onShowBg }) {
             // Once the collapse transition finishes (950ms):
             setTimeout(() => {
               isCollapsingRef.current = false;
+              hasInitialRebuildFinished = true;
               if (panelRef.current) {
                 panelRef.current.style.willChange = "auto";
-              }
-              if (!isRealHoverRef.current) {
-                hoveringRef.current = false;
-                measure();
-                startLoop();
               }
               // After collapse is done: fade in background gradient
               onShowBg?.();
@@ -848,8 +865,8 @@ export default function Home({ onShowBg }) {
         ref={panelRef}
         style={{
           position: "relative",
-          width: "784px",
-          maxWidth: "70vw",
+          width: hasInitialRebuildFinished ? "486px" : "784px",
+          maxWidth: hasInitialRebuildFinished ? "48vw" : "70vw",
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",

@@ -2005,7 +2005,10 @@ class Engine {
       c.gen = null;
       c.angle = ((((c.angle + 180) % 360) + 360) % 360) - 180;
     }
-    if (this.sfx) this.sfx.start();
+    if (this.sfx) {
+      this.sfx.resume();
+      this.sfx.start();
+    }
     if (this.onStart) this.onStart();
   }
 
@@ -2893,6 +2896,9 @@ class Sound {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return false;
       this.ctx = offline || new Ctx({ latencyHint: "interactive" });
+      if (this.ctx && this.ctx.state === "suspended") {
+        this.ctx.resume().catch(() => {});
+      }
     } catch (_) {
       return false;
     }
@@ -2962,7 +2968,11 @@ class Sound {
   }
 
   ready() {
-    return this.ctx && this.on && (this.fakeNow != null || this.ctx.state === "running");
+    if (!this.ctx || !this.on) return false;
+    if (this.ctx.state === "suspended" && this.ctx.resume) {
+      this.ctx.resume().catch(() => {});
+    }
+    return this.fakeNow != null || this.ctx.state === "running";
   }
 
   grid(div = 4) {
@@ -3228,30 +3238,34 @@ export default function SwarmRebuildLoader({
       engine.mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
       // Handle pointer movement for cursor interaction
+      const unlockAudio = () => {
+        if (sfx) sfx.resume();
+      };
+
       const onMove = (e) => {
         if (engine) engine.mouse = { x: e.clientX, y: e.clientY };
+        unlockAudio();
       };
       const onDown = (e) => {
         if (engine) engine.mouse = { x: e.clientX, y: e.clientY };
-        if (sfx) sfx.resume();
+        unlockAudio();
       };
       const onLeave = () => {
         if (engine) engine.mouse = null;
       };
-      const onUnlock = () => {
-        if (sfx) sfx.resume();
-      };
+
+      const unlockEvents = ["pointermove", "pointerdown", "touchstart", "keydown", "wheel", "focus", "mouseenter"];
+      unlockEvents.forEach((evt) => window.addEventListener(evt, unlockAudio, { passive: true }));
 
       window.addEventListener("pointermove", onMove, { passive: true });
       document.documentElement.addEventListener("pointerleave", onLeave);
       window.addEventListener("pointerdown", onDown, { passive: true });
-      window.addEventListener("keydown", onUnlock, { passive: true });
 
       unbinds.push(() => {
+        unlockEvents.forEach((evt) => window.removeEventListener(evt, unlockAudio));
         window.removeEventListener("pointermove", onMove);
         document.documentElement.removeEventListener("pointerleave", onLeave);
         window.removeEventListener("pointerdown", onDown);
-        window.removeEventListener("keydown", onUnlock);
       });
 
       // Capture snapshot model of target element, ignoring [data-main-loader]
