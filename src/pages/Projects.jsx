@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { AsciiReveal } from "ascii-reveal";
 import { PROJECTS, PROJECT_COLUMNS } from "../data/projects";
 
 const SANS = "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
@@ -48,11 +47,7 @@ function ProjectCard({ project }) {
   }, [isVideo]);
 
   return (
-    <article
-      className="pf-card"
-      data-ascii="surface"
-      style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-    >
+    <article className="pf-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       <div
         className="pf-media"
         style={{
@@ -104,7 +99,6 @@ function ProjectCard({ project }) {
           {project.title}
         </h2>
         <span
-          data-ascii="fade"
           style={{
             fontFamily: MONO,
             fontWeight: 500,
@@ -137,10 +131,7 @@ export default function Projects() {
   const countStr = PROJECTS.length.toString().padStart(2, "0");
 
   return (
-    <AsciiReveal
-      as="main"
-      preset="dither"
-      duration="cinematic"
+    <main
       data-portfolio
       style={{
         position: "relative",
@@ -160,9 +151,11 @@ export default function Projects() {
           display: "flex",
           alignItems: "center",
           padding: "4px 0",
+          opacity: 0,
+          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
         }}
       >
-        <Link to="/" className="brand-link" data-ascii="fade">
+        <Link to="/" className="brand-link">
           Hafiz Yoosuf
         </Link>
       </header>
@@ -170,6 +163,8 @@ export default function Projects() {
       <div
         style={{
           padding: "28px 0 16px",
+          opacity: 0,
+          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards",
         }}
       >
         <span
@@ -187,18 +182,20 @@ export default function Projects() {
       </div>
 
       <section className="pf-grid" aria-label="Selected projects">
-        {PROJECT_COLUMNS.flat().map((p) => (
+        {PROJECT_COLUMNS.flat().map((p, i) => (
           <div
             key={p.id}
             style={{
               breakInside: "avoid",
               marginBottom: "42px",
+              opacity: 0,
+              animation: `pf-in 700ms cubic-bezier(0.16,1,0.3,1) ${140 + i * 45}ms forwards`,
             }}
           >
             <ProjectCard project={p} />
           </div>
         ))}
       </section>
-    </AsciiReveal>
+    </main>
   );
 }

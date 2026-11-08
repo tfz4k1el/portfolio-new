@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { AsciiReveal } from "ascii-reveal";
 
 const TILE_COLORS = { g: "#6aaa64", y: "#c9b458", b: "#27272a" };
 const WD_KEY = "wordle_data";
@@ -68,10 +67,7 @@ export default function Wordle() {
   const streak = data.streak ?? DEFAULT_DATA.streak;
 
   return (
-    <AsciiReveal
-      as="div"
-      preset="terminal"
-      duration="cinematic"
+    <div
       data-screen-label="Wordle"
       data-el="page"
       style={{
@@ -91,9 +87,11 @@ export default function Wordle() {
           display: "flex",
           alignItems: "center",
           padding: "4px 0",
+          opacity: 0,
+          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
         }}
       >
-        <Link to="/" className="brand-link" data-ascii="fade">
+        <Link to="/" className="brand-link">
           Hafiz Yoosuf
         </Link>
       </div>
@@ -117,6 +115,8 @@ export default function Wordle() {
             lineHeight: "100%",
             letterSpacing: "0.08em",
             color: "#8a8a8a",
+            opacity: 0,
+            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards",
           }}
         >
           WORDLE
@@ -129,13 +129,14 @@ export default function Wordle() {
               fontSize: "20px",
               lineHeight: "100%",
               color: "#ffffff",
+              opacity: 0,
+              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
             }}
           >
             Wordle {data.puzzle} {data.score}
           </span>
 
           <div
-            data-ascii="skip"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(5, 44px)",
@@ -177,6 +178,6 @@ export default function Wordle() {
           )}
         </div>
       </div>
-    </AsciiReveal>
+    </div>
   );
 }
