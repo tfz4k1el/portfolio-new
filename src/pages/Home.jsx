@@ -78,7 +78,8 @@ export default function Home() {
   // Drift loop animation references
   const clockRef = useRef(0);
   const lastTsRef = useRef(null);
-  const hoveringRef = useRef(false);
+  const hoveringRef = useRef(true); // Locked in expanded state initially
+  const isRealHoverRef = useRef(false); // Tracks actual mouse hover
   const rafRef = useRef(null);
   const maxShiftRef = useRef([0, 0, 0, 0]);
 
@@ -134,8 +135,9 @@ export default function Home() {
     rafRef.current = requestAnimationFrame(step);
   }, [strips, driftX]);
 
-  // Preload UI images and verify initial video readiness cleanly without hogging bandwidth
+  // Staging Pipeline: Preload assets, wait for fonts, fetch real Last.fm track
   useEffect(() => {
+    let cancelled = false;
     const imageUrls = [
       "/assets/projects/ui/Noveo.webp",
       "/assets/projects/ui/Vire.webp",
@@ -143,37 +145,82 @@ export default function Home() {
       "/assets/projects/ui/nxhuman.webp",
     ];
 
-    const allUrls = [...imageUrls];
-    const progressMap = new Map(allUrls.map((url) => [url, 0]));
-    let done = false;
+    const totalUnits = imageUrls.length + 2; // images + fonts + Last.fm
+    let completedUnits = 0;
 
-    const finish = () => {
-      if (done) return;
-      done = true;
-      setLoadingPercent(100);
-      window.setTimeout(() => setIsLoaded(true), 200);
-    };
-
-    const updateUI = (url) => {
-      if (done) return;
-      progressMap.set(url, 1);
-      const total = allUrls.reduce((acc, u) => acc + (progressMap.get(u) || 0), 0);
-      const pct = Math.min(100, Math.round((total / allUrls.length) * 100));
+    const tick = () => {
+      if (cancelled) return;
+      completedUnits++;
+      const pct = Math.min(100, Math.round((completedUnits / totalUnits) * 100));
       setLoadingPercent(pct);
-      if (pct >= 100) finish();
+      if (completedUnits >= totalUnits) {
+        setLoadingPercent(100);
+        window.setTimeout(() => {
+          if (!cancelled) setIsLoaded(true);
+        }, 200);
+      }
     };
 
-    const safetyTimer = window.setTimeout(finish, 1800);
-
+    // 1. Preload UI images
     imageUrls.forEach((src) => {
       const img = new Image();
-      img.onload = () => updateUI(src);
-      img.onerror = () => updateUI(src);
+      img.onload = tick;
+      img.onerror = tick;
       img.src = src;
-      if (img.complete) updateUI(src);
+      if (img.complete) tick();
     });
 
-    return () => window.clearTimeout(safetyTimer);
+    // 2. Await fonts
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(tick).catch(tick);
+    } else {
+      tick();
+    }
+
+    // 3. Fetch real Last.fm track during staging
+    const fetchLastFm = async () => {
+      if (!LASTFM_USER || !LASTFM_KEY) {
+        tick();
+        return;
+      }
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1200);
+        const res = await fetch(
+          `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${LASTFM_USER}&api_key=${LASTFM_KEY}&format=json&limit=1`,
+          { signal: controller.signal }
+        );
+        clearTimeout(timeout);
+        const d = await res.json();
+        const tracks = d.recenttracks && d.recenttracks.track;
+        const track = Array.isArray(tracks) ? tracks[0] : tracks;
+        if (track && !cancelled) {
+          setNowPlaying(track.name);
+          setNowArtist((track.artist || {})["#text"] || "");
+          setIsLive(Boolean((track["@attr"] || {}).nowplaying));
+        }
+      } catch (_) {
+        if (!cancelled) {
+          setNowPlaying((prev) => prev ?? "E85");
+          setNowArtist((prev) => prev ?? "Don Tolover");
+        }
+      }
+      tick();
+    };
+
+    fetchLastFm();
+
+    const safetyTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        setLoadingPercent(100);
+        setIsLoaded(true);
+      }
+    }, 1800);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(safetyTimer);
+    };
   }, []);
 
   // Performance-optimised IntersectionObserver for videos:
@@ -221,7 +268,7 @@ export default function Home() {
     };
   }, []);
 
-  // Initialize loop, observers, and event listeners
+  // Initialize observers and event listeners (drift loop held paused during expanded staging)
   useEffect(() => {
     measure();
     const onResize = () => measure();
@@ -235,7 +282,6 @@ export default function Home() {
       if (s0) ro.observe(s0);
     }
     const tMeasure = setTimeout(() => measure(), 300);
-    startLoop();
 
     const onDocClick = (e) => {
       if (socialsOpen && socialsWrapRef.current && !socialsWrapRef.current.contains(e.target)) {
@@ -251,16 +297,32 @@ export default function Home() {
       if (ro) ro.disconnect();
       clearTimeout(tMeasure);
     };
-  }, [measure, startLoop, socialsOpen]);
+  }, [measure, socialsOpen]);
 
-  // Last.fm live track fetch
+  // Collapse bar at t = 3.0s as specified, then start the subtle sine-wave drift loop
   useEffect(() => {
-    const fallbackTimer = setTimeout(() => {
-      setNowPlaying((prev) => prev ?? "E85");
-      setNowArtist((prev) => prev ?? "Don Tolover");
-    }, 2500);
+    const collapseTimer = setTimeout(() => {
+      if (isRealHoverRef.current) return; // User is actively hovering with their cursor
+      hoveringRef.current = false;
+      if (panelRef.current && window.innerWidth > 900) {
+        panelRef.current.style.width = "486px";
+        panelRef.current.style.maxWidth = "48vw";
+      }
+      strips().forEach((el) => {
+        if (el) el.style.transition = "none";
+      });
+      setTimeout(() => {
+        measure();
+        startLoop();
+      }, 950);
+    }, 3000);
 
-    if (!LASTFM_USER || !LASTFM_KEY) return () => clearTimeout(fallbackTimer);
+    return () => clearTimeout(collapseTimer);
+  }, [measure, startLoop, strips]);
+
+  // Periodic Last.fm live track fetch
+  useEffect(() => {
+    if (!LASTFM_USER || !LASTFM_KEY) return;
     const fetchNow = () => {
       fetch(
         `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${LASTFM_USER}&api_key=${LASTFM_KEY}&format=json&limit=1`
@@ -274,19 +336,16 @@ export default function Home() {
           setNowArtist((track.artist || {})["#text"] || "");
           setIsLive(Boolean((track["@attr"] || {}).nowplaying));
         })
-        .catch(() => { });
+        .catch(() => {});
     };
 
-    fetchNow();
     const interval = setInterval(fetchNow, 30000);
-    return () => {
-      clearTimeout(fallbackTimer);
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   // Hover handlers for drifting panel
   const handleEnter = (e) => {
+    isRealHoverRef.current = true;
     hoveringRef.current = true;
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
@@ -317,6 +376,7 @@ export default function Home() {
   };
 
   const handleLeave = () => {
+    isRealHoverRef.current = false;
     hoveringRef.current = false;
     if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
 
@@ -422,8 +482,6 @@ export default function Home() {
             display: "flex",
             alignItems: "center",
             padding: "4px 0",
-            opacity: 0,
-            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
           }}
         >
           <Link to="/" className="brand-link">
@@ -446,8 +504,6 @@ export default function Home() {
               display: "flex",
               flexDirection: "column",
               gap: "16px",
-              opacity: 0,
-              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 80ms forwards",
             }}
           >
             <span
@@ -564,8 +620,6 @@ export default function Home() {
               display: "flex",
               flexDirection: "column",
               gap: "16px",
-              opacity: 0,
-              animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
             }}
           >
             <span
@@ -707,8 +761,6 @@ export default function Home() {
             flexDirection: "column",
             gap: "8px",
             padding: "4px 0",
-            opacity: 0,
-            animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 240ms forwards",
           }}
         >
           <span
@@ -743,15 +795,13 @@ export default function Home() {
         ref={panelRef}
         style={{
           position: "relative",
-          width: "486px",
-          maxWidth: "48vw",
+          width: "784px",
+          maxWidth: "70vw",
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           transition: "width 900ms cubic-bezier(0.16,1,0.3,1), max-width 900ms cubic-bezier(0.16,1,0.3,1)",
-          opacity: 0,
-          animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards",
         }}
       >
         <div
