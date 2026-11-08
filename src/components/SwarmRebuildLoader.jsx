@@ -3221,9 +3221,16 @@ export default function SwarmRebuildLoader({
       sfx.init();
       engine.sfx = sfx;
 
+      // Default pointer target to screen center so flocking has immediate target
+      engine.mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
       // Handle pointer movement for cursor interaction
       const onMove = (e) => {
         if (engine) engine.mouse = { x: e.clientX, y: e.clientY };
+      };
+      const onDown = (e) => {
+        if (engine) engine.mouse = { x: e.clientX, y: e.clientY };
+        if (sfx) sfx.resume();
       };
       const onLeave = () => {
         if (engine) engine.mouse = null;
@@ -3234,13 +3241,13 @@ export default function SwarmRebuildLoader({
 
       window.addEventListener("pointermove", onMove, { passive: true });
       document.documentElement.addEventListener("pointerleave", onLeave);
-      window.addEventListener("pointerdown", onUnlock, { passive: true });
+      window.addEventListener("pointerdown", onDown, { passive: true });
       window.addEventListener("keydown", onUnlock, { passive: true });
 
       unbinds.push(() => {
         window.removeEventListener("pointermove", onMove);
         document.documentElement.removeEventListener("pointerleave", onLeave);
-        window.removeEventListener("pointerdown", onUnlock);
+        window.removeEventListener("pointerdown", onDown);
         window.removeEventListener("keydown", onUnlock);
       });
 
@@ -3272,18 +3279,26 @@ export default function SwarmRebuildLoader({
         if (sfx) sfx.finale();
         if (view && view.hud) view.hud.classList.remove("on");
 
-        // Step 4a: Fade out swarm overlay smoothly
-        if (host) {
-          host.style.transition = "opacity 450ms ease";
-          host.style.opacity = "0";
-        }
+        // Circle around pointer for 500ms using reference flocking logic
+        const circleTimer = setTimeout(() => {
+          if (dead) return;
 
-        // After fade out completes, trigger completion hand-off
-        setTimeout(() => {
-          if (!dead && onComplete) {
-            onComplete();
+          // Fade out swarm overlay smoothly over 450ms
+          if (host) {
+            host.style.transition = "opacity 450ms ease";
+            host.style.opacity = "0";
           }
-        }, 460);
+
+          // After fade out completes, trigger completion hand-off
+          const fadeTimer = setTimeout(() => {
+            if (!dead && onComplete) {
+              onComplete();
+            }
+          }, 460);
+          unbinds.push(() => clearTimeout(fadeTimer));
+        }, 500);
+
+        unbinds.push(() => clearTimeout(circleTimer));
       };
 
       engine.onComplete = handleFinish;

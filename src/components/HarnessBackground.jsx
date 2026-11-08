@@ -1,11 +1,23 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 /**
  * DeepSeek Harness gradient background.
  * Pure React + CSS: scattered moving ambient orbs, subtle tech grid, and tactile film grain noise.
  * Zero WebGL, zero canvas, zero runtime overhead.
  */
-export default function HarnessBackground() {
+export default function HarnessBackground({ visible: propVisible = true }) {
+  const [visible, setVisible] = useState(propVisible);
+
+  useEffect(() => {
+    setVisible(propVisible);
+  }, [propVisible]);
+
+  useEffect(() => {
+    const handleShow = () => setVisible(true);
+    window.addEventListener("show-harness-bg", handleShow);
+    return () => window.removeEventListener("show-harness-bg", handleShow);
+  }, []);
+
   return (
     <div
       aria-hidden="true"
@@ -18,6 +30,16 @@ export default function HarnessBackground() {
         background: "#070406",
       }}
     >
+      <div
+        data-harness-glow
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: visible ? 1 : 0,
+          transition: "opacity 1200ms cubic-bezier(0.16, 1, 0.3, 1)",
+          willChange: "opacity",
+        }}
+      >
       <style>{`
         @keyframes harness-orb-1 {
           0%, 100% {
@@ -152,6 +174,7 @@ export default function HarnessBackground() {
             "radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(7, 4, 6, 0.72) 100%)",
         }}
       />
+      </div>
     </div>
   );
 }

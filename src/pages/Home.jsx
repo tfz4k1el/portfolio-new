@@ -55,7 +55,7 @@ function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
   );
 }
 
-export default function Home() {
+export default function Home({ onShowBg }) {
   const navigate = useNavigate();
 
   const containerRef = useRef(null);
@@ -309,8 +309,7 @@ export default function Home() {
   const handleSwarmComplete = useCallback(() => {
     setSwarmActive(false);
 
-    if (isRealHoverRef.current) return; // User is actively hovering with their cursor
-    if (panelRef.current && window.innerWidth > 900) {
+    if (!isRealHoverRef.current && panelRef.current && window.innerWidth > 900) {
       panelRef.current.style.transition = "width 900ms cubic-bezier(0.16, 1, 0.3, 1), max-width 900ms cubic-bezier(0.16, 1, 0.3, 1)";
       panelRef.current.style.width = "486px";
       panelRef.current.style.maxWidth = "48vw";
@@ -320,12 +319,16 @@ export default function Home() {
     });
 
     setTimeout(() => {
-      if (isRealHoverRef.current) return;
-      hoveringRef.current = false;
-      measure();
-      startLoop();
+      if (!isRealHoverRef.current) {
+        hoveringRef.current = false;
+        measure();
+        startLoop();
+      }
+      // After collapse is done: fade in background gradient
+      onShowBg?.();
+      window.dispatchEvent(new CustomEvent("show-harness-bg"));
     }, 950);
-  }, [measure, startLoop, strips]);
+  }, [measure, startLoop, strips, onShowBg]);
 
   // Periodic Last.fm live track fetch
   useEffect(() => {
