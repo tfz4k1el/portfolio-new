@@ -12,7 +12,7 @@ function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
       style={{
         width: "387px",
         aspectRatio: "16/9",
-        background: "#171717",
+        background: "transparent",
         position: "relative",
         overflow: "hidden",
       }}
@@ -200,10 +200,7 @@ export default function Home() {
           setIsLive(Boolean((track["@attr"] || {}).nowplaying));
         }
       } catch (_) {
-        if (!cancelled) {
-          setNowPlaying((prev) => prev ?? "E85");
-          setNowArtist((prev) => prev ?? "Don Tolover");
-        }
+        // failed silently, no hardcoding
       }
       tick();
     };
@@ -411,7 +408,7 @@ export default function Home() {
   };
 
   const nowLabel = nowPlaying && !isLive ? "LAST PLAYED" : "NOW PLAYING";
-  const nowTrack = nowPlaying ? `${nowPlaying} — ${nowArtist}` : "E85 – Don Tolover";
+  const nowTrack = nowPlaying ? `${nowPlaying} — ${nowArtist}` : "";
 
   const handleVideoMetadata = (e) => {
     e.currentTarget.muted = true;
