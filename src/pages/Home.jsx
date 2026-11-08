@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import SwarmRebuildLoader from "../components/SwarmRebuildLoader";
 
 const LASTFM_USER = "Zafkiel69";
 const LASTFM_KEY = "c34fdb3897e465413e4fbf9d94b8da85";
@@ -74,6 +75,7 @@ export default function Home() {
   // Preloader state
   const [loadingPercent, setLoadingPercent] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [swarmActive, setSwarmActive] = useState(false);
 
   // Drift loop animation references
   const clockRef = useRef(0);
@@ -156,7 +158,10 @@ export default function Home() {
       if (completedUnits >= totalUnits) {
         setLoadingPercent(100);
         window.setTimeout(() => {
-          if (!cancelled) setIsLoaded(true);
+          if (!cancelled) {
+            setIsLoaded(true);
+            setSwarmActive(true);
+          }
         }, 200);
       }
     };
@@ -211,6 +216,7 @@ export default function Home() {
       if (!cancelled) {
         setLoadingPercent(100);
         setIsLoaded(true);
+        setSwarmActive(true);
       }
     }, 1800);
 
@@ -296,25 +302,29 @@ export default function Home() {
     };
   }, [measure, socialsOpen]);
 
-  // Collapse bar at t = 3.0s as specified, then start the subtle sine-wave drift loop
-  useEffect(() => {
-    const collapseTimer = setTimeout(() => {
-      if (isRealHoverRef.current) return; // User is actively hovering with their cursor
-      hoveringRef.current = false;
-      if (panelRef.current && window.innerWidth > 900) {
-        panelRef.current.style.width = "486px";
-        panelRef.current.style.maxWidth = "48vw";
-      }
-      strips().forEach((el) => {
-        if (el) el.style.transition = "none";
-      });
-      setTimeout(() => {
-        measure();
-        startLoop();
-      }, 950);
-    }, 3000);
+  // Hand-off triggered when the swarm rebuild completes:
+  // a) Unmount swarm overlay (setSwarmActive(false))
+  // b) Trigger smooth collapse of the drift panel from 784px down to 486px (900ms cubic-bezier(0.16, 1, 0.3, 1))
+  // c) Start the ambient sine-wave drift loop once the collapse completes
+  const handleSwarmComplete = useCallback(() => {
+    setSwarmActive(false);
 
-    return () => clearTimeout(collapseTimer);
+    if (isRealHoverRef.current) return; // User is actively hovering with their cursor
+    if (panelRef.current && window.innerWidth > 900) {
+      panelRef.current.style.transition = "width 900ms cubic-bezier(0.16, 1, 0.3, 1), max-width 900ms cubic-bezier(0.16, 1, 0.3, 1)";
+      panelRef.current.style.width = "486px";
+      panelRef.current.style.maxWidth = "48vw";
+    }
+    strips().forEach((el) => {
+      if (el) el.style.transition = "none";
+    });
+
+    setTimeout(() => {
+      if (isRealHoverRef.current) return;
+      hoveringRef.current = false;
+      measure();
+      startLoop();
+    }, 950);
   }, [measure, startLoop, strips]);
 
   // Periodic Last.fm live track fetch
@@ -1018,6 +1028,14 @@ export default function Home() {
       >
         CLICK TO VIEW ALL PROJECTS
       </div>
+
+      {/* SWARM REBUILD MULTIPLAYER LOADER */}
+      {swarmActive && (
+        <SwarmRebuildLoader
+          targetSelector='[data-el="page"]'
+          onComplete={handleSwarmComplete}
+        />
+      )}
     </div>
   );
 }
