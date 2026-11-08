@@ -814,7 +814,7 @@ export default function Home() {
             >
               <HomeMediaCard
                 isVideo
-                src="/assets/projects/motion/Infinity.webm"
+                src="/assets/projects/motion/StockBud.webm"
                 isLoaded={isLoaded}
                 onLoadedMetadata={handleVideoMetadata}
               />
@@ -826,7 +826,7 @@ export default function Home() {
               <HomeMediaCard
                 isVideo
                 extra
-                src="/assets/projects/motion/StockBud.webm"
+                src="/assets/projects/motion/Infinity.webm"
                 isLoaded={isLoaded}
                 onLoadedMetadata={handleVideoMetadata}
               />
@@ -921,8 +921,8 @@ export default function Home() {
                 onLoadedMetadata={handleVideoMetadata}
               />
               <HomeMediaCard
-                src="/assets/projects/ui/Noveo.webp"
-                alt="Noveo interface project preview"
+                src="/assets/projects/ui/nxhuman.webp"
+                alt="NxHuman interface project preview"
                 isLoaded={isLoaded}
               />
             </div>
