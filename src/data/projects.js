@@ -1,14 +1,5 @@
 export const PROJECTS = [
   {
-    id: "infinity",
-    src: "/assets/projects/motion/Infinity.webm",
-    mediaType: "video",
-    title: "Infinity",
-    category: "Motion · Identity",
-    aspect: "16 / 9",
-    description: "A motion identity built on the logic of continuation — easing standards, loop architecture, and timing that holds across every brand touchpoint.",
-  },
-  {
     id: "noveo",
     src: "/assets/projects/ui/Noveo.webp",
     mediaType: "image",
@@ -89,11 +80,20 @@ export const PROJECTS = [
     aspect: "16 / 9",
     description: "Conceptual product animation and interface choreography built for intelligent AI workflows.",
   },
+  {
+    id: "infinity",
+    src: "/assets/projects/motion/Infinity.webm",
+    mediaType: "video",
+    title: "Infinity",
+    category: "Motion · Identity",
+    aspect: "16 / 9",
+    description: "A motion identity built on the logic of continuation — easing standards, loop architecture, and timing that holds across every brand touchpoint.",
+  },
 ];
 
-// 3-column layout distribution
+// 3-column layout distribution (Infinity is positioned at the very end of column 3)
 export const PROJECT_COLUMNS = [
-  [PROJECTS[0], PROJECTS[3], PROJECTS[6], PROJECTS[8]], // Infinity, Vire, Vireclub, Extraordinary
-  [PROJECTS[1], PROJECTS[4], PROJECTS[7]],              // Noveo, T2Chat, NxHuman
-  [PROJECTS[2], PROJECTS[5], PROJECTS[9]],              // StockBud, Asmitha, Muster AI
+  [PROJECTS[0], PROJECTS[3], PROJECTS[6]],              // Noveo, T2Chat, NxHuman
+  [PROJECTS[1], PROJECTS[4], PROJECTS[7]],              // StockBud, Asmitha, Extraordinary
+  [PROJECTS[2], PROJECTS[5], PROJECTS[8], PROJECTS[9]], // Vire, Vireclub, Muster AI, Infinity
 ];

@@ -23,7 +23,7 @@ function ProjectCard({ project }) {
           }
         });
       },
-      { threshold: 0.05 }
+      { threshold: 0.05, rootMargin: "150px 0px" }
     );
 
     observer.observe(vid);
@@ -33,7 +33,7 @@ function ProjectCard({ project }) {
         vid.pause();
       } else {
         const rect = vid.getBoundingClientRect();
-        if (rect.bottom > 0 && rect.top < window.innerHeight) {
+        if (rect.bottom > -150 && rect.top < window.innerHeight + 150) {
           vid.play().catch(() => { });
         }
       }
@@ -52,35 +52,69 @@ function ProjectCard({ project }) {
         className="pf-media"
         style={{
           width: "100%",
-          background: "#171717",
+          aspectRatio: project.aspect || (isVideo ? "16 / 9" : "16 / 10"),
+          background: "#120e10",
           overflow: "hidden",
-          borderRadius: "3px",
+          borderRadius: "4px",
           position: "relative",
         }}
       >
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            right: "10px",
+            padding: "3px 8px",
+            borderRadius: "999px",
+            background: "rgba(8, 4, 6, 0.65)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            fontFamily: MONO,
+            fontWeight: 600,
+            fontSize: "10px",
+            letterSpacing: "0.08em",
+            color: isVideo ? "var(--accent)" : "#d4d4d8",
+            pointerEvents: "none",
+            zIndex: 2,
+          }}
+        >
+          {isVideo ? "MOTION" : "INTERFACE"}
+        </div>
         {isVideo ? (
           <video
             ref={videoRef}
             src={project.src}
-            autoPlay
             muted
             loop
             playsInline
-            preload="auto"
+            preload="metadata"
             disablePictureInPicture
             disableRemotePlayback
             onLoadedMetadata={(e) => {
               e.currentTarget.muted = true;
-              e.currentTarget.play().catch(() => { });
             }}
-            style={{ width: "100%", height: "auto", display: "block", willChange: "transform", transform: "translateZ(0)" }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              willChange: "transform",
+              transform: "translateZ(0)",
+            }}
           />
         ) : (
           <img
             src={project.src}
             alt={`${project.title} project preview`}
+            loading="lazy"
             decoding="async"
-            style={{ width: "100%", height: "auto", display: "block" }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
           />
         )}
       </div>
@@ -150,6 +184,7 @@ export default function Projects() {
         style={{
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           padding: "4px 0",
           opacity: 0,
           animation: "pf-in 700ms cubic-bezier(0.16,1,0.3,1) 0ms forwards",
@@ -157,6 +192,27 @@ export default function Projects() {
       >
         <Link to="/" className="brand-link">
           Hafiz Yoosuf
+        </Link>
+        <Link
+          to="/"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            color: "#8a8a8a",
+            textDecoration: "none",
+            fontFamily: MONO,
+            fontSize: "12px",
+            letterSpacing: "0.06em",
+            transition: "color 180ms ease",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#8a8a8a")}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M7.5 9L4.5 6L7.5 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          BACK
         </Link>
       </header>
 

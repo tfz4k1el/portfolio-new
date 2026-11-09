@@ -5,6 +5,14 @@ import SwarmRebuildLoader from "../components/SwarmRebuildLoader";
 const LASTFM_USER = "Zafkiel69";
 const LASTFM_KEY = "c34fdb3897e465413e4fbf9d94b8da85";
 
+// ============================================================================
+// RESUME LINK CONFIGURATION
+// Paste your Google Drive link between the quotes below:
+// Example: export const RESUME_DRIVE_URL = "https://drive.google.com/file/d/YOUR_DRIVE_ID/view";
+// If left empty (""), clicking the RESUME button opens the generated PDF resume (/Hafiz_Yoosuf_Resume.pdf).
+// ============================================================================
+export const RESUME_DRIVE_URL = "https://drive.google.com/file/d/1rYfnak_k59h56W3ollowrfinta5PnhXU/view?usp=drive_link";
+
 function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
   return (
     <div
@@ -721,28 +729,8 @@ export default function Home({ onShowBg }) {
                 </button>
                 <div
                   data-socials-popup
+                  className={socialsOpen ? "is-open" : ""}
                   ref={socialsRef}
-                  style={{
-                    position: "absolute",
-                    left: "calc(100% + 20px)",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    opacity: socialsOpen ? 1 : 0,
-                    visibility: socialsOpen ? "visible" : "hidden",
-                    transition: "opacity 180ms ease, visibility 180ms ease",
-                    background: "rgba(18, 12, 16, 0.85)",
-                    backdropFilter: "blur(14px)",
-                    WebkitBackdropFilter: "blur(14px)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: "10px",
-                    boxShadow: "0 16px 36px rgba(0,0,0,0.6)",
-                    padding: "16px 18px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                    zIndex: 40,
-                    whiteSpace: "nowrap",
-                  }}
                 >
                   <a
                     href="https://instagram.com/z4rchx"
@@ -770,22 +758,51 @@ export default function Home({ onShowBg }) {
                       z4f3x
                     </span>
                   </a>
-                  <div className="social-item">
+                  <a
+                    href="https://www.youtube.com/@zafkiel3429"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="social-item"
+                  >
                     <span style={{ fontFamily: "'Geist Mono', monospace", fontWeight: 500, fontSize: "11px", letterSpacing: "0.08em", color: "#71717a", width: "82px" }}>
                       YOUTUBE
                     </span>
-                    <span className="social-handle" style={{ fontFamily: "'Geist', sans-serif", fontWeight: 600, fontSize: "14px", color: "#ffffff" }}>
-                      —
+                    <span className="social-handle" style={{ fontFamily: "'Geist', sans-serif", fontWeight: 600, fontSize: "14px", color: "#ffffff", transition: "color 180ms ease" }}>
+                      @zafkiel3429
                     </span>
-                  </div>
+                  </a>
                   <div className="social-item">
                     <span style={{ fontFamily: "'Geist Mono', monospace", fontWeight: 500, fontSize: "11px", letterSpacing: "0.08em", color: "#71717a", width: "82px" }}>
                       DISCORD
                     </span>
                     <span className="social-handle" style={{ fontFamily: "'Geist', sans-serif", fontWeight: 600, fontSize: "14px", color: "#ffffff" }}>
-                      —
+                      z4k1el
                     </span>
                   </div>
+                  <a
+                    href="https://wa.me/918592882354"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="social-item"
+                  >
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontWeight: 500, fontSize: "11px", letterSpacing: "0.08em", color: "#71717a", width: "82px" }}>
+                      WHATSAPP
+                    </span>
+                    <span className="social-handle" style={{ fontFamily: "'Geist', sans-serif", fontWeight: 600, fontSize: "14px", color: "#ffffff", transition: "color 180ms ease" }}>
+                      +91 8592882354
+                    </span>
+                  </a>
+                  <a
+                    href="mailto:hafizyoosuf710@gmail.com"
+                    className="social-item"
+                  >
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontWeight: 500, fontSize: "11px", letterSpacing: "0.08em", color: "#71717a", width: "82px" }}>
+                      MAIL
+                    </span>
+                    <span className="social-handle" style={{ fontFamily: "'Geist', sans-serif", fontWeight: 600, fontSize: "14px", color: "#ffffff", transition: "color 180ms ease" }}>
+                      hafizyoosuf710
+                    </span>
+                  </a>
                 </div>
               </div>
 
@@ -817,7 +834,12 @@ export default function Home({ onShowBg }) {
                 </span>
               </div>
 
-              <a href="#" className="nav-btn">
+              <a
+                href={RESUME_DRIVE_URL && RESUME_DRIVE_URL.trim() !== "" ? RESUME_DRIVE_URL : "/Hafiz_Yoosuf_Resume.pdf"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nav-btn"
+              >
                 RESUME
               </a>
               <Link to="/guestbook" className="nav-btn">
