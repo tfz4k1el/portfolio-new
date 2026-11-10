@@ -618,9 +618,7 @@ export default function Home({ onShowBg }) {
                 textWrap: "pretty",
               }}
             >
-              Second-year engineering student and freelance designer. I do UI/UX
-              Designs — clean interfaces, things that actually make sense to use — plus
-              Motion Graphics and AMVs, mostly in{" "}
+              I&apos;m a UI/UX designer and motion artist who studies engineering, so I design things that look good, are easy to use, and actually get built. I&apos;m into psychology too, because why not? Aren&apos;t humans the most interesting creatures on this planet? I work mostly in{" "}
               <a
                 href="https://www.figma.com"
                 target="_blank"
@@ -676,7 +674,7 @@ export default function Home({ onShowBg }) {
                   <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
                 </svg>
               </a>
-              . On the side I&apos;m working on{" "}
+              , make AMVs on the side, and I&apos;m building{" "}
               <a
                 href={PHII_PROJECT_URL}
                 target="_blank"
@@ -693,7 +691,7 @@ export default function Home({ onShowBg }) {
                 onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
               >
-                phii
+                Phii
                 <svg
                   width="8"
                   height="8"
@@ -704,7 +702,7 @@ export default function Home({ onShowBg }) {
                   <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
                 </svg>
               </a>
-              . When I&apos;m not working I&apos;m usually wandering around, some of my best ideas show up mid-walk. Got an interesting idea?{" "}
+              , it is a non-competitive community for creatives but more on that later. Most of my ideas show up mid-walk, so if you wanna have a walk or a talk,{" "}
               <a
                 href="mailto:hafizyoosuf710@gmail.com"
                 style={{
@@ -730,6 +728,7 @@ export default function Home({ onShowBg }) {
                   <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
                 </svg>
               </a>
+              .
             </span>
           </div>
 
