@@ -11,14 +11,12 @@ const LASTFM_KEY = "c34fdb3897e465413e4fbf9d94b8da85";
 // Example: export const RESUME_DRIVE_URL = "https://drive.google.com/file/d/YOUR_DRIVE_ID/view";
 // If left empty (""), clicking the RESUME button opens the generated PDF resume (/Hafiz_Yoosuf_Resume.pdf).
 // ============================================================================
-export const RESUME_DRIVE_URL = "https://drive.google.com/file/d/1rYfnak_k59h56W3ollowrfinta5PnhXU/view?usp=drive_link";
+export const RESUME_DRIVE_URL = "https://drive.google.com/file/d/12jdElhAiJOepG8P84qi3hAqtCrCVo-om/view?usp=sharing";
 
 // ============================================================================
-// PROJECT FEE LINK CONFIGURATION
-// Paste your project link for 'fee' between the quotes below:
-// Example: export const FEE_PROJECT_URL = "https://your-fee-link.com";
+// PROJECT PHII LINK CONFIGURATION
 // ============================================================================
-export const FEE_PROJECT_URL = "#";
+export const PHII_PROJECT_URL = "https://phii-topaz.vercel.app/";
 
 function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
   const isInfinity = src && src.includes("Infinity");
@@ -680,8 +678,8 @@ export default function Home({ onShowBg }) {
               </a>
               . On the side I&apos;m working on{" "}
               <a
-                href={FEE_PROJECT_URL}
-                target={FEE_PROJECT_URL && FEE_PROJECT_URL !== "#" ? "_blank" : undefined}
+                href={PHII_PROJECT_URL}
+                target="_blank"
                 rel="noopener noreferrer"
                 style={{
                   color: "#ffffff",
@@ -695,7 +693,7 @@ export default function Home({ onShowBg }) {
                 onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
               >
-                fee
+                phii
                 <svg
                   width="8"
                   height="8"

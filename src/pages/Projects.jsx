@@ -59,29 +59,7 @@ function ProjectCard({ project }) {
           position: "relative",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            padding: "3px 8px",
-            borderRadius: "999px",
-            background: "rgba(8, 4, 6, 0.65)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            border: "1px solid rgba(255, 255, 255, 0.12)",
-            fontFamily: MONO,
-            fontWeight: 600,
-            fontSize: "10px",
-            letterSpacing: "0.08em",
-            color: isVideo ? "var(--accent)" : "#d4d4d8",
-            pointerEvents: "none",
-            zIndex: 2,
-          }}
-        >
-          {isVideo ? "MOTION" : project.category.includes("Game") ? "GAME" : "INTERFACE"}
-        </div>
-        {isVideo ? (
+                {isVideo ? (
           <video
             ref={videoRef}
             src={project.src}
