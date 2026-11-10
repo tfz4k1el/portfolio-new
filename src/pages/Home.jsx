@@ -13,7 +13,15 @@ const LASTFM_KEY = "c34fdb3897e465413e4fbf9d94b8da85";
 // ============================================================================
 export const RESUME_DRIVE_URL = "https://drive.google.com/file/d/1rYfnak_k59h56W3ollowrfinta5PnhXU/view?usp=drive_link";
 
+// ============================================================================
+// PROJECT FEE LINK CONFIGURATION
+// Paste your project link for 'fee' between the quotes below:
+// Example: export const FEE_PROJECT_URL = "https://your-fee-link.com";
+// ============================================================================
+export const FEE_PROJECT_URL = "#";
+
 function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
+  const isInfinity = src && src.includes("Infinity");
   return (
     <div
       data-card
@@ -21,7 +29,7 @@ function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
       style={{
         width: "387px",
         aspectRatio: "16/9",
-        background: "transparent",
+        background: isInfinity ? "#0a0608" : "transparent",
         position: "relative",
         overflow: "hidden",
       }}
@@ -40,7 +48,7 @@ function HomeMediaCard({ isVideo, src, alt, extra, onLoadedMetadata }) {
           style={{
             width: "100%",
             height: "100%",
-            objectFit: "cover",
+            objectFit: isInfinity ? "contain" : "cover",
             display: "block",
             willChange: "transform",
             transform: "translateZ(0)",
@@ -670,7 +678,35 @@ export default function Home({ onShowBg }) {
                   <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
                 </svg>
               </a>
-              . On the side I&apos;m working on phii. When I&apos;m not working I&apos;m usually wandering irl, some of my best ideas show up mid-walk. Got an interesting idea?{" "}
+              . On the side I&apos;m working on{" "}
+              <a
+                href={FEE_PROJECT_URL}
+                target={FEE_PROJECT_URL && FEE_PROJECT_URL !== "#" ? "_blank" : undefined}
+                rel="noopener noreferrer"
+                style={{
+                  color: "#ffffff",
+                  textDecoration: "underline",
+                  textDecorationColor: "var(--accent)",
+                  textDecorationThickness: "1px",
+                  textUnderlineOffset: "3px",
+                  cursor: "pointer",
+                  transition: "color 180ms ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
+              >
+                fee
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 8 8"
+                  fill="none"
+                  style={{ verticalAlign: "super", marginLeft: "2px" }}
+                >
+                  <path d="M1.2 6.8L6.8 1.2M6.8 1.2H2.6M6.8 1.2V5.4" stroke="#f34951" strokeWidth="1.1" />
+                </svg>
+              </a>
+              . When I&apos;m not working I&apos;m usually wandering around, some of my best ideas show up mid-walk. Got an interesting idea?{" "}
               <a
                 href="mailto:hafizyoosuf710@gmail.com"
                 style={{

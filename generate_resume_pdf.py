@@ -236,26 +236,24 @@ def build_pdf(output_path):
             ]
         ),
         (
-            "Infinity — Brand Motion Identity &amp; System",
+            "Infinity — Community Motion &amp; Promo Video",
             "After Effects, Illustrator, Media Encoder",
             [
-                "Designed an omni-channel motion identity system founded on infinite loop architecture, standardized easing formulas, and seamless logo transitions.",
-                "Rendered lightweight, high-performance WebM motion assets maintaining visual fidelity across web and mobile viewports."
+                "Produced dynamic promo video for Infinity's 10k+ WhatsApp community, utilizing seamless loop architecture, pacing, and brand identity motion."
             ]
         ),
         (
-            "Muster AI &amp; T2Chat — AI Product Choreography &amp; Concept Demos",
+            "Muster AI &amp; T2Chat — Product Launch &amp; Concept Motion",
             "After Effects, Figma, Premiere Pro",
             [
-                "Choreographed interface motion and product explainer animations for conversational AI platforms, solving user perception during message latency.",
-                "Produced animated product walkthroughs detailing intelligent AI workflows for early-stage stakeholder presentations."
+                "Choreographed launch promo and interface explainer animations for conversational AI platforms, solving user perception during message latency."
             ]
         ),
         (
-            "Vireclub — Web3 Community Motion Identity",
-            "After Effects, Illustrator",
+            "nxstudio &amp; Vireclub — Product UI/UX &amp; Workflow Architecture",
+            "Figma, Illustrator, React",
             [
-                "Animated brand visual identities featuring subtle spatial transitions, particle depth, and ambient glow effects reinforcing community exclusivity."
+                "Designed full application UI, architecture workflows, and design systems for nxstudio (Cursor IDE prompt engine) and Vireclub's loyalty app."
             ]
         )
     ]

@@ -79,7 +79,7 @@ function ProjectCard({ project }) {
             zIndex: 2,
           }}
         >
-          {isVideo ? "MOTION" : "INTERFACE"}
+          {isVideo ? "MOTION" : project.category.includes("Game") ? "GAME" : "INTERFACE"}
         </div>
         {isVideo ? (
           <video
